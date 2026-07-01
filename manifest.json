@@ -1,0 +1,17 @@
+{
+  "name": "Glam Boutique",
+  "short_name": "Glam Boutique",
+  "description": "Moda autêntica e elegância em Guarabira - PB",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdfcfa",
+  "theme_color": "#15130f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
