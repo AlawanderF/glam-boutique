@@ -1,0 +1,79 @@
+# ============================================================================
+# Glam Boutique — Deploy automático no GitHub Pages
+# ============================================================================
+# Esse workflow roda a cada push na branch "main" e publica o site.
+#
+# COMO ATIVAR (faça isso UMA VEZ antes do primeiro push):
+#   1. No seu repositório no GitHub, vá em Settings → Pages.
+#   2. Em "Build and deployment > Source", selecione "GitHub Actions".
+#   3. Pronto. O próximo push na branch main vai acionar esse workflow.
+#
+# SE O SEU REPO FOR DE ORGANIZAÇÃO OU PRIVADO:
+#   O site fica em https://SEU-USUARIO.github.io/NOME-DO-REPO/
+#   O nome do repositório é capturado automaticamente na linha "base:" abaixo.
+#   Para repositório PESSOAL com nome "SEU-USUARIO.github.io", o site fica
+#   em https://SEU-USUARIO.github.io/ e o base deve ser "/" — ajuste a linha
+#   VITE_BASE_PATH se for esse o caso.
+# ============================================================================
+
+name: Deploy Glam Boutique → GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # permite disparar manualmente pela aba "Actions"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências do frontend
+        run: npm ci
+
+      # O nome do repositório (ex: "glam-boutique") vira o caminho base da URL.
+      # Se o seu repo se chama SEU-USUARIO.github.io, mude para: VITE_BASE_PATH=/
+      - name: Build de produção (com caminho base do GitHub Pages)
+        env:
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: npm run build:gh-pages
+
+      - name: Configurar o GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Fazer upload dos artefatos de build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
