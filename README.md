@@ -127,24 +127,15 @@ src/
 
 ## Painel administrativo (`/admin`)
 
-Acesse em `/admin` (há um link discreto no rodapé da loja, "Painel administrativo"). Credenciais de demonstração:
-
-```
-E-mail: admin@glamboutique.com.br
-Senha:  glamadmin123
-```
-
-(Definidas em `src/store/adminAuthStore.ts` — troque por autenticação real ao integrar com o backend.)
+Acesse em `/admin`. **Requer backend configurado** — ver seção "Backend MySQL" abaixo.
 
 | Página | O que faz |
-|---|---|
-| **Visão geral** | KPIs (receita, pedidos, ticket médio, saídas, receita líquida), gráfico de receita dos últimos 30 dias, produtos mais vendidos |
-| **Vendas** | Receita e pedidos filtráveis por período (7/14/30 dias), lista de pedidos recentes |
-| **Saídas** | CRUD completo de despesas do negócio (descrição, categoria, valor, data, status de pagamento) |
-| **Visitantes** | Visualizações de página e sessões únicas **reais do navegador atual** (rastreadas a cada troca de rota via `VisitTracker`), páginas mais acessadas, dispositivo (mobile/desktop) |
-| **Pagamentos** | Ativa/desativa Pix, Cartão, Boleto e Carteiras digitais, edita desconto/parcelas, e permite **criar métodos customizados** — tudo isso reflete imediatamente na etapa de pagamento do checkout da loja |
-
-**Importante sobre "Visitantes":** como é um app só de frontend, o contador de visitas usa `localStorage` — ele é real, mas só conta o navegador de quem está acessando o admin. Para ver visitas de **todos os clientes** do site (analytics de verdade), é necessário o backend com MySQL (próxima seção), que tem uma tabela `page_views` e um endpoint `/api/analytics/summary` prontos para isso.
+|--------|-----------|
+| **Visão geral** | KPIs (receita, pedidos, ticket médio, saídas, receita líquida), gráfico de receita, produtos mais vendidos |
+| **Vendas** | Receita e pedidos filtráveis por período (7/14/30 dias) |
+| **Saídas** | CRUD completo de despesas (descrição, categoria, valor, data, status) |
+| **Visitantes** | Page views e sessões (requer backend com tabela `page_views`) |
+| **Pagamentos** | Ativa/desativa Pix, Cartão, Boleto — reflete no checkout em tempo real |
 
 ---
 
@@ -194,15 +185,132 @@ HTTPS gratuito via `certbot --nginx` (instruções no README do server).
 
 ---
 
-## Próximos passos sugeridos (opcional)
+## Configuração de produção
 
-Os dados de produtos, categorias, marcas, depoimentos e pedidos estão em `src/constants/*.ts` como mocks. Para produção:
+### 1. Google Analytics 4
 
-1. Substituir os mocks por chamadas reais via `src/services/` (a ser criado) usando React Query (`useQuery`/`useMutation`).
-2. Conectar `authStore.ts` a um backend de autenticação real (JWT/OAuth) — os botões sociais em `SocialLoginButtons.tsx` já estão prontos para receber o fluxo OAuth.
-3. Integrar `StepPayment.tsx` a um gateway de pagamento real (Pix/cartão/boleto) — atualmente simula a confirmação.
-4. Configurar variáveis de ambiente (`.env`) para a URL da API e chaves públicas de gateway.
-5. Adicionar testes (estrutura já prevista em `src/tests/`).
+Abra [`index.html`](index.html) e substitua `G-XXXXXXXXXX` pelo seu ID do GA4:
+
+```html
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+```
+
+Para obter o ID: [analytics.google.com](https://analytics.google.com) → Admin → Data Streams → Web Stream → Measurement ID.
+
+---
+
+### 2. GitHub Pages (deploy automático)
+
+1. Acesse **Settings → Pages** do repositório
+2. Em "Build and deployment → Source", selecione **GitHub Actions**
+3. Push qualquer commit na branch `main` — o deploy roda automaticamente
+
+URL do site: `https://AlawanderF.github.io/glam-boutique/`
+
+O workflow em [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) já está configurado.
+
+---
+
+### 3. Backend MySQL
+
+```bash
+cd server
+
+# 1. Instalar dependências
+npm install
+
+# 2. Criar arquivo de ambiente
+cp .env.example .env
+
+# 3. Configurar .env:
+#    - DB_HOST, DB_USER, DB_PASSWORD, DB_NAME (credenciais MySQL)
+#    - ADMIN_EMAIL (e-mail do admin)
+#    - ADMIN_PASSWORD_HASH (ver passo 4)
+#    - ADMIN_JWT_SECRET (ver passo 4)
+#    - SMTP_* (ver passo 5)
+
+# 4. Gerar hash da senha admin e JWT secret
+node -e "console.log('ADMIN_JWT_SECRET:'); console.log(require('crypto').randomBytes(64).toString('hex'))"
+node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('sua-senha-forte', 10).then(h => console.log('ADMIN_PASSWORD_HASH:' + h))"
+
+# 5. Criar banco de dados
+mysql -u root -p -e "CREATE DATABASE glam_boutique;"
+npm run db:setup   # executa schema.sql + seed.sql
+
+# 6. Iniciar API
+npm run dev        # http://localhost:3333
+```
+
+---
+
+### 4. E-mails transacionais (SMTP)
+
+No `.env` do server, configure:
+
+```env
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=resend
+SMTP_PASS=re_xxxxx_seu_api_key
+SMTP_FROM=noreply@glamboutique.com.br
+FRONTEND_URL=https://AlawanderF.github.io/glam-boutique
+```
+
+Recomendado: [**Resend**](https://resend.com) (500 emails grátis/mês) ou SendGrid/Amazon SES.
+
+---
+
+### 5. Variáveis de ambiente do frontend
+
+Crie `.env.local` na raiz do projeto:
+
+```bash
+VITE_API_URL=http://localhost:3333/api    # desenvolvimento
+VITE_GA4_ID=G-XXXXXXXXXX                   # opcional
+```
+
+Para produção (Vercel/Netlify), configure no painel do projeto em **Settings → Environment Variables**.
+
+---
+
+### Checklist de produção
+
+| Tarefa | Status | Onde |
+|--------|--------|------|
+| Google Analytics 4 | ⬜ | `index.html` |
+| GitHub Pages ativo | ⬜ | github.com/settings/pages |
+| Backend MySQL rodando | ⬜ | `server/` |
+| Admin configurado | ⬜ | `server/.env` |
+| SMTP configurado | ⬜ | `server/.env` |
+| Domínio personalizado | ⬜ | Registrar + DNS |
+
+---
+
+## Migração para dados reais
+
+Os dados mock em `src/constants/*.ts` devem ser substituídos por chamadas à API:
+
+1. **Produtos/Categorias/Marcas**: criar `src/services/products.ts` com `useQuery` + `useMutation`
+2. **Autenticação de clientes**: conectar `authStore.ts` ao backend JWT
+3. **Login social**: OAuth callbacks em `SocialLoginButtons.tsx`
+4. **Pagamentos**: integrar gateway real (Stripe, Pagar.me, MercadoPago)
+5. **Pedidos**: salvar via API ao confirmar checkout
+
+---
+
+## Estrutura do projeto
+
+```
+src/
+├── components/          # UI modular por domínio
+├── pages/               # Uma pasta por rota
+├── store/               # Zustand (estado global)
+├── hooks/               # Lógica reutilizável
+├── services/            # Camada de acesso à API
+├── constants/           # Dados mock
+└── types/               # TypeScript types
+```
 
 ---
 
