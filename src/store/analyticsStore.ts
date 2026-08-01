@@ -5,9 +5,9 @@ import type { PageView } from '@/types/admin';
 interface AnalyticsState {
   pageViews: PageView[];
   recordPageView: (path: string) => void;
-  totalViews: () => number;
-  uniqueSessions: () => number;
-  viewsByPath: () => { path: string; count: number }[];
+  getTotalViews: () => number;
+  getUniqueSessions: () => number;
+  getViewsByPath: () => { path: string; count: number }[];
 }
 
 const MAX_STORED_VIEWS = 2000;
@@ -24,6 +24,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
   persist(
     (set, get) => ({
       pageViews: [],
+
       recordPageView: (path) => {
         const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
         const sessionId = getSessionId();
@@ -32,16 +33,19 @@ export const useAnalyticsStore = create<AnalyticsState>()(
           path,
           timestamp: new Date().toISOString(),
           device: isMobile ? 'mobile' : 'desktop',
-          referrer: document.referrer || 'direto',
+          referrer: typeof document !== 'undefined' ? (document.referrer || 'direto') : 'direto',
           sessionId,
         };
         set((state) => ({
           pageViews: [...state.pageViews, view].slice(-MAX_STORED_VIEWS),
         }));
       },
-      totalViews: () => get().pageViews.length,
-      uniqueSessions: () => new Set(get().pageViews.map((v) => v.sessionId)).size,
-      viewsByPath: () => {
+
+      getTotalViews: () => get().pageViews.length,
+
+      getUniqueSessions: () => new Set(get().pageViews.map((v) => v.sessionId)).size,
+
+      getViewsByPath: () => {
         const counts = new Map<string, number>();
         for (const view of get().pageViews) {
           counts.set(view.path, (counts.get(view.path) ?? 0) + 1);

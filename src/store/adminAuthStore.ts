@@ -1,6 +1,32 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiRequest, isBackendConfigured } from '@/services/api';
+
+const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+
+function isBackendConfigured(): boolean {
+  return Boolean(API_URL && API_URL.trim().length > 0);
+}
+
+async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  if (!API_URL) {
+    throw new Error('VITE_API_URL não configurada.');
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error ?? `Erro na requisição (${response.status})`);
+  }
+
+  return response.json() as Promise<T>;
+}
 
 export type AdminAuthMode = 'backend' | 'demo';
 
@@ -23,11 +49,11 @@ export const useAdminAuthStore = create<AdminAuthState>()(
 
       login: async (email, password) => {
         if (!isBackendConfigured()) {
-          return { success: false, message: 'Backend não configurado. Configure VITE_API_URL no frontend.' };
+          return { success: false, message: 'Backend não configurado.' };
         }
 
         try {
-          const result = await apiRequest<{ token: string }>('/api/admin/login', {
+          const result = await apiRequest<{ token: string }>('/admin/login', {
             method: 'POST',
             body: JSON.stringify({ email, password }),
           });
@@ -41,7 +67,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
         } catch (error) {
           return {
             success: false,
-            message: error instanceof Error ? error.message : 'Não foi possível entrar.',
+            message: error instanceof Error ? error.message : 'Erro ao fazer login.',
           };
         }
       },

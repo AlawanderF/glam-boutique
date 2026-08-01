@@ -48,3 +48,18 @@ export const trafficSources = [
   { source: 'WhatsApp', visits: 510, percent: 11 },
   { source: 'Outros', visits: 290, percent: 6 },
 ];
+
+export const salesByCategory = [
+  { category: 'Feminino', value: 45890 },
+  { category: 'Masculino', value: 32450 },
+  { category: 'Acessórios', value: 18760 },
+  { category: 'Calçados', value: 23100 },
+  { category: 'Infantil', value: 12340 },
+];
+
+export const orderStatusData = [
+  { status: 'Concluídos', value: 156, color: '#22c55e' },
+  { status: 'Processando', value: 34, color: '#b8863e' },
+  { status: 'Pendentes', value: 12, color: '#8a8479' },
+  { status: 'Cancelados', value: 8, color: '#ef4444' },
+];
