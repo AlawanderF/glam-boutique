@@ -26,6 +26,18 @@ server {
 
   gzip on;
   gzip_types text/css application/javascript application/json image/svg+xml;
+
+  # Proxy reverso para a API Node (porta 3333). O backend escuta em 127.0.0.1
+  # dentro do mesmo servidor; Nginx encaminha /api/* sem precisar de domínio separado.
+  location /api/ {
+    proxy_pass http://127.0.0.1:3333/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 30s;
+  }
 }
 
 # Depois de configurar o domínio, gere HTTPS gratuito com Certbot:

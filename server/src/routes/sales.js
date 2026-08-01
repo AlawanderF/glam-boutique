@@ -19,7 +19,8 @@ salesRouter.get('/daily', async (req, res) => {
     );
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao consultar vendas diárias.', detail: error.message });
+    console.error('[sales.daily]', error);
+    res.status(500).json({ error: 'Erro ao consultar vendas diárias.' });
   }
 });
 
@@ -38,7 +39,8 @@ salesRouter.get('/orders', async (req, res) => {
     );
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao consultar pedidos.', detail: error.message });
+    console.error('[sales.orders]', error);
+    res.status(500).json({ error: 'Erro ao consultar pedidos.' });
   }
 });
 
@@ -54,6 +56,7 @@ salesRouter.get('/top-products', async (_req, res) => {
     );
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao consultar produtos mais vendidos.', detail: error.message });
+    console.error('[sales.top-products]', error);
+    res.status(500).json({ error: 'Erro ao consultar produtos mais vendidos.' });
   }
 });

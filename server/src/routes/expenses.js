@@ -10,7 +10,8 @@ expensesRouter.get('/', requireAdminAuth, async (_req, res) => {
     const [rows] = await pool.query('SELECT * FROM expenses ORDER BY expense_date DESC');
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao consultar saídas.', detail: error.message });
+    console.error('[expenses.GET]', error);
+    res.status(500).json({ error: 'Erro ao consultar saídas.' });
   }
 });
 
@@ -29,7 +30,8 @@ expensesRouter.post('/', requireAdminAuth, async (req, res) => {
     );
     res.status(201).json({ id: result.insertId });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao criar saída.', detail: error.message });
+    console.error('[expenses.POST]', error);
+    res.status(500).json({ error: 'Erro ao criar saída.' });
   }
 });
 
@@ -51,7 +53,8 @@ expensesRouter.patch('/:id', requireAdminAuth, async (req, res) => {
     );
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao atualizar saída.', detail: error.message });
+    console.error('[expenses.PATCH]', error);
+    res.status(500).json({ error: 'Erro ao atualizar saída.' });
   }
 });
 
@@ -61,6 +64,7 @@ expensesRouter.delete('/:id', requireAdminAuth, async (req, res) => {
     await pool.query('DELETE FROM expenses WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao remover saída.', detail: error.message });
+    console.error('[expenses.DELETE]', error);
+    res.status(500).json({ error: 'Erro ao remover saída.' });
   }
 });

@@ -11,7 +11,17 @@ import { analyticsRouter } from './routes/analytics.js';
 const app = express();
 const PORT = process.env.PORT ?? 3333;
 
-app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' }));
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowed = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+    // Permite requisições sem origin (curl, Postman, server-side) ou whitelisted origins.
+    if (!origin || allowed.includes(origin)) return callback(null, true);
+    callback(new Error(`Origin ${origin} não permitido por CORS`));
+  },
+}));
 app.use(express.json());
 
 // Health check — não depende do banco, útil para monitoramento/uptime checks.
@@ -36,12 +46,21 @@ app.use('/api/payment-methods', paymentMethodsRouter);
 app.use('/api/analytics', analyticsRouter);
 
 // Handler de erro genérico — evita que o processo derrube em caso de erro não tratado.
+// Loga internamente com id mas não vaza stack nem mensagem do MySQL pro cliente.
 app.use((err, _req, res, _next) => {
-  console.error('Erro não tratado:', err);
-  res.status(500).json({ error: 'Erro interno do servidor.' });
+  const errorId = `err-${Date.now().toString(36)}`;
+  console.error(`[${errorId}]`, {
+    message: err.message,
+    stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined,
+    timestamp: new Date().toISOString(),
+  });
+  res.status(500).json({ error: 'Erro interno do servidor.', errorId });
 });
 
-app.listen(PORT, () => {
-  console.log(`Glam Boutique API rodando em http://localhost:${PORT}`);
-  console.log(`Verifique a conexão com o MySQL em http://localhost:${PORT}/api/health/db`);
+app.listen(Number(PORT), '0.0.0.0', () => {
+  const msg = process.env.NODE_ENV === 'production'
+    ? `Glam Boutique API online na porta ${PORT}`
+    : `Glam Boutique API em http://localhost:${PORT}`;
+  console.log(msg);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
 });

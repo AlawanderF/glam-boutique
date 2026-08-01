@@ -18,7 +18,8 @@ analyticsRouter.post('/pageview', async (req, res) => {
     );
     res.status(201).json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao registrar visita.', detail: error.message });
+    console.error('[analytics.pageview]', error);
+    res.status(500).json({ error: 'Erro ao registrar visita.' });
   }
 });
 
@@ -47,6 +48,7 @@ analyticsRouter.get('/summary', requireAdminAuth, async (req, res) => {
     );
     res.json({ totals, topPages });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao consultar analytics.', detail: error.message });
+    console.error('[analytics.summary]', error);
+    res.status(500).json({ error: 'Erro ao consultar analytics.' });
   }
 });

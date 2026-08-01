@@ -10,7 +10,8 @@ paymentMethodsRouter.get('/', async (_req, res) => {
     const [rows] = await pool.query('SELECT * FROM payment_methods ORDER BY created_at ASC');
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao consultar métodos de pagamento.', detail: error.message });
+    console.error('[paymentMethods.GET]', error);
+    res.status(500).json({ error: 'Erro ao consultar métodos de pagamento.' });
   }
 });
 
@@ -29,7 +30,8 @@ paymentMethodsRouter.post('/', requireAdminAuth, async (req, res) => {
     );
     res.status(201).json({ id });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao criar método de pagamento.', detail: error.message });
+    console.error('[paymentMethods.POST]', error);
+    res.status(500).json({ error: 'Erro ao criar método de pagamento.' });
   }
 });
 
@@ -48,7 +50,8 @@ paymentMethodsRouter.patch('/:id', requireAdminAuth, async (req, res) => {
     );
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao atualizar método de pagamento.', detail: error.message });
+    console.error('[paymentMethods.PATCH]', error);
+    res.status(500).json({ error: 'Erro ao atualizar método de pagamento.' });
   }
 });
 
@@ -58,6 +61,7 @@ paymentMethodsRouter.delete('/:id', requireAdminAuth, async (req, res) => {
     await pool.query('DELETE FROM payment_methods WHERE id = ? AND is_custom = TRUE', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao remover método de pagamento.', detail: error.message });
+    console.error('[paymentMethods.DELETE]', error);
+    res.status(500).json({ error: 'Erro ao remover método de pagamento.' });
   }
 });

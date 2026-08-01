@@ -8,7 +8,9 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "db:schema": "node scripts/runSqlFile.js schema.sql",
-    "db:seed": "node scripts/runSqlFile.js seed.sql"
+    "db:seed": "node scripts/runSqlFile.js seed.sql",
+    "db:setup": "node scripts/runSqlFile.js schema.sql && node scripts/runSqlFile.js seed.sql",
+    "db:reset": "node scripts/runSqlFile.js schema.sql"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -16,6 +18,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.11.0"
+    "mysql2": "^3.11.0",
+    "nodemailer": "^6.9.16"
   }
 }

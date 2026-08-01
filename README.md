@@ -150,25 +150,51 @@ Senha:  glamadmin123
 
 ## Backend MySQL (pasta `server/`)
 
-A pasta [`server/`](./server) contém uma API Node.js + Express + MySQL completa e pronta para uso com o **MySQL Workbench**: schema SQL, seed de dados, rotas REST para vendas, saídas, métodos de pagamento e analytics.
+A pasta [`server/`](./server) contém uma API Node.js + Express + MySQL completa. O login admin **já está integrado** — preencha `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH` e `ADMIN_JWT_SECRET` no `server/.env` e a autenticação para de usar o modo demo.
 
 Resumo rápido (instruções completas em [`server/README.md`](./server/README.md)):
 
 ```bash
-# No MySQL Workbench: File > Open SQL Script > server/schema.sql > Execute (raio)
-# (repita com server/seed.sql para dados de exemplo)
+# 1. Subir MySQL local
+sudo systemctl start mysql   # ou via MySQL Workbench
 
+# 2. Setup
 cd server
 npm install
-cp .env.example .env   # ajuste usuário/senha do seu MySQL
-npm run dev             # API em http://localhost:3333
+cp .env.example .env
+# Edite .env com suas credenciais MySQL + ADMIN_PASSWORD_HASH + ADMIN_JWT_SECRET
+npm run db:setup   # cria banco + popula com dados de exemplo
+npm run dev        # API em http://localhost:3333
 ```
 
-O frontend funciona inteiramente sozinho (sem este backend) usando dados locais para demonstração. Conectar o admin a este backend real é o "próximo passo" documentado tanto aqui quanto em `server/README.md`.
+Para o frontend usar o backend local, crie `.env.local` na raiz do projeto:
+
+```bash
+echo 'VITE_API_URL=http://localhost:3333/api' > .env.local
+```
 
 ---
 
-## Próximos passos sugeridos (integração com backend real)
+## Deploy em produção
+
+Opção mais simples: **VPS único (Hetzner CX22 / Hostinger)** rodando MySQL + Node + Nginx. ~R$30/mês.
+
+Setup completo em [`server/README.md`](./server/README.md#deploy-em-produção-vps-único).
+
+DNS no registrador:
+```
+Tipo    Nome    Valor           TTL
+A       @       <IP-VPS>        300
+A       www     <IP-VPS>        300
+```
+
+HTTPS gratuito via `certbot --nginx` (instruções no README do server).
+
+**Alternativas gerenciadas** (mais caro, menos controle): Vercel (frontend) + Railway (backend + MySQL). ~$15/mês.
+
+---
+
+## Próximos passos sugeridos (opcional)
 
 Os dados de produtos, categorias, marcas, depoimentos e pedidos estão em `src/constants/*.ts` como mocks. Para produção:
 

@@ -1,0 +1,747 @@
+================================================================================
+GLAM BOUTIQUE — TUTORIAL COMPLETO DO PROJETO
+================================================================================
+Site: Glam Boutique | Moda autêntica e elegância em Guarabira - PB
+Stack: React 19 + Vite + TypeScript + Tailwind + Zustand + Express + MySQL
+================================================================================
+
+
+================================================================================
+PARTE 1 — VISÃO GERAL
+================================================================================
+
+Glam Boutique é uma loja virtual de moda feminina com painel administrativo
+completo. Foi pensada para rodar em dois modos:
+
+  - MODO DEMO (sem backend): frontend puro, dados em memória + localStorage.
+    Ideal para demonstrar a UI antes de subir o banco.
+  - MODO BACKEND (produção): frontend conversa com API Node/Express/MySQL,
+    dados persistem de verdade.
+
+Quando a variável VITE_API_URL existe no .env.local, o app detecta e muda
+automaticamente pra modo backend (ver src/services/api.ts).
+
+O painel administrativo (/admin) autentica contra o backend com JWT (8h).
+O login de clientes (/entrar, /cadastro) é mock por enquanto.
+
+
+================================================================================
+PARTE 2 — STACK TECNOLÓGICA
+================================================================================
+
+FRONTEND (raiz do projeto)
+  - React 19.2.6
+  - Vite 8 (build tool / dev server)
+  - TypeScript
+  - React Router DOM 7 (rotas client-side com lazy loading)
+  - Tailwind CSS 3 (estilização utilitária)
+  - Zustand 5 (estado global, 10 stores separadas)
+  - TanStack React Query 5 (preparado para integração com API)
+  - Framer Motion 12 (animações)
+  - Recharts 3 (gráficos do dashboard)
+  - Embla Carousel (sliders)
+  - Lucide React (ícones)
+  - React Hook Form + Zod (formulários)
+  - date-fns + date-fns-tz (datas)
+
+BACKEND (pasta server/)
+  - Node.js 20
+  - Express 4.19
+  - mysql2 3.11 (driver MySQL com pool)
+  - bcryptjs (hash de senha)
+  - jsonwebtoken (JWT 8h)
+  - cors (liberação de origens)
+  - dotenv (env vars)
+
+DEPLOY
+  - Vercel (configurado, vercel.json)
+  - Netlify (configurado, netlify.toml)
+  - GitHub Pages (configurado, .github/workflows/deploy.yml)
+  - VPS único (Node + Nginx + MySQL via PM2) — recomendado
+
+
+================================================================================
+PARTE 3 — ESTRUTURA DE PASTAS
+================================================================================
+
+glam-boutique/
+├── .claude/                  Configurações locais do Claude Code
+│   └── settings.local.json   Allowlist de comandos permitidos
+├── .env.example              Template de variáveis (frontend)
+├── .env.local                Variáveis locais (gitignored) — VITE_API_URL
+├── .github/workflows/        CI/CD GitHub Pages
+├── dist/                     Build do frontend (gerado por npm run build)
+├── nginx.conf.example        Config Nginx com proxy /api/ → backend
+├── package.json              Dependências e scripts do frontend
+├── tsconfig.json             TypeScript config
+├── tailwind.config.js        Cores: ink, gold, cream; fontes: Playfair + Inter
+├── vite.config.ts            Build config (base path, chunks vendor)
+├── vercel.json               Deploy config Vercel
+├── netlify.toml              Deploy config Netlify
+│
+├── src/                      CÓDIGO DO FRONTEND
+│   ├── App.tsx               QueryClient + ErrorBoundary root
+│   ├── main.tsx              Ponto de entrada React
+│   ├── routes/AppRoutes.tsx  TODAS as rotas da aplicação
+│   ├── services/api.ts       Camada única de acesso à API (apiRequest)
+│   ├── store/                10 stores Zustand (ver PARTE 9)
+│   ├── pages/                Páginas da loja + admin
+│   │   ├── Home/             Landing page
+│   │   ├── Catalog/          Catálogo com filtros
+│   │   ├── Product/          Página de produto individual
+│   │   ├── Cart/             Carrinho
+│   │   ├── Checkout/         Checkout multi-step
+│   │   ├── Account/          Perfil + pedidos + favoritos do cliente
+│   │   ├── Auth/             Login + cadastro + recuperar senha
+│   │   ├── Admin/            Painel administrativo (ver PARTE 10)
+│   │   ├── Legal/            Privacidade, Termos, Trocas
+│   │   └── NotFound/         404
+│   ├── components/           Componentes organizados por contexto
+│   │   ├── ui/               Botões, inputs, modais, badges (primitivos)
+│   │   ├── layout/           Header, Footer, MainLayout
+│   │   ├── home/             Hero, vitrines, depoimentos
+│   │   ├── catalog/          Filtros laterais, grid de produtos
+│   │   ├── product/          Galeria, seletor de cor/tamanho, tabs
+│   │   ├── checkout/         Steps (carrinho → endereço → pagamento → revisão)
+│   │   ├── account/          Forms de perfil
+│   │   ├── auth/             Forms de login/cadastro
+│   │   ├── admin/            Cards do painel, tabelas, gráficos
+│   │   └── common/           Toasts, scroll-to-top, page loader
+│   ├── hooks/                useDebounce, useMediaQuery, etc
+│   ├── constants/            products.ts, categories.ts, brands.ts, salesData.ts
+│   ├── utils/                formatters, validators, cn() (Tailwind merge)
+│   ├── types/                Tipos TypeScript compartilhados
+│   ├── styles/               CSS global + animações customizadas
+│   ├── layouts/              MainLayout (com header+footer) e AdminLayout
+│   └── assets/               Imagens e SVGs
+│
+└── server/                   CÓDIGO DO BACKEND
+    ├── .env                  Variáveis reais (gitignored) — secrets
+    ├── .env.example          Template documentado
+    ├── package.json          Scripts: dev, start, db:setup, db:schema, db:seed
+    ├── schema.sql            7 tabelas MySQL
+    ├── seed.sql              Dados iniciais de exemplo
+    ├── Dockerfile            Build container Node 20 Alpine
+    ├── .dockerignore         Exclui node_modules, .env, etc do container
+    └── src/
+        ├── index.js          Entry Express + bind 0.0.0.0 + CORS multi-origin
+        ├── db.js             Pool mysql2 (lazy, decimal as number)
+        └── routes/
+            ├── adminAuth.js      POST /api/admin/login + middleware JWT
+            ├── sales.js          GET daily / orders / top-products
+            ├── expenses.js       CRUD completo de saídas
+            ├── paymentMethods.js Listagem pública + CRUD custom (admin)
+            └── analytics.js      POST pageview (público) + GET summary
+
+
+================================================================================
+PARTE 4 — INSTALAÇÃO PASSO A PASSO (DESENVOLVIMENTO LOCAL)
+================================================================================
+
+PRÉ-REQUISITOS
+  - Node.js 20+  →  https://nodejs.org/
+  - MySQL 8+     →  https://dev.mysql.com/downloads/installer/
+                     (ou use MySQL Workbench que já vem junto)
+  - Git
+  - npm (já vem com Node)
+
+
+PASSO 1 — Clonar o repositório
+  $ git clone https://github.com/seu-usuario/glam-boutique.git
+  $ cd glam-boutique
+
+
+PASSO 2 — Instalar dependências do frontend
+  $ npm install
+
+
+PASSO 3 — Instalar dependências do backend
+  $ cd server
+  $ npm install
+  $ cd ..
+
+
+PASSO 4 — Subir o MySQL
+  - Linux/Mac: $ sudo systemctl start mysql   (ou use XAMPP/MAMP)
+  - Windows: abra o MySQL Workbench ou Services → MySQL → Start
+
+
+PASSO 5 — Criar banco + popular dados (via terminal)
+  $ cd server
+  $ npm run db:setup
+  # OU via MySQL Workbench: File → Open SQL Script → schema.sql → Execute (⚡)
+  #   repita com seed.sql
+
+
+PASSO 6 — Configurar variáveis do backend
+  $ cd server
+  $ cp .env.example .env
+  $ # edite .env com seu editor favorito (DB_PASSWORD no mínimo)
+
+  # Gerar hash da senha admin:
+  $ node scripts/hashPassword.js "sua-senha-aqui"
+
+  # Gerar JWT secret forte:
+  $ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+  # Cole os valores gerados no .env:
+  #   ADMIN_PASSWORD_HASH=<hash>
+  #   ADMIN_JWT_SECRET=<secret>
+
+
+PASSO 7 — Configurar variáveis do frontend
+  $ cd ..   (volta pra raiz)
+  $ echo 'VITE_API_URL=http://localhost:3333/api' > .env.local
+
+
+PASSO 8 — Subir backend (terminal 1)
+  $ cd server
+  $ npm run dev
+  # → "Glam Boutique API online na porta 3333"
+  # → "Health check: http://localhost:3333/api/health"
+
+
+PASSO 9 — Subir frontend (terminal 2)
+  $ cd ..
+  $ npm run dev
+  # → abre em http://localhost:5173
+
+
+PASSO 10 — Testar
+  - Abra http://localhost:5173 no navegador
+  - Clique em "Painel administrativo" no rodapé (ou vá em /admin/entrar)
+  - Login:
+      E-mail: admin@seudominio.com.br (o que você colocou no .env)
+      Senha:  a senha que você gerou no PASSO 6
+  - Backend: curl http://localhost:3333/api/health → {"status":"ok"}
+
+
+================================================================================
+PARTE 5 — ROTEIRO DE ROTAS (FRONTEND)
+================================================================================
+
+LOJA (com MainLayout, header + footer)
+  /                         Home (vitrine + categorias + depoimentos)
+  /catalogo                 Catálogo geral com filtros (tamanho, cor, preço)
+  /catalogo/:categorySlug   Catálogo filtrado por categoria
+  /produto/:slug            Página individual do produto
+  /carrinho                 Carrinho com cupons
+  /checkout                 Checkout multi-step:
+                              step 1 → revisão do pedido
+                              step 2 → endereço de entrega
+                              step 3 → método de pagamento (lê /api/payment-methods)
+                              step 4 → revisão final + simulação de confirmação
+  /conta                    Layout autenticado do cliente:
+                              /conta/perfil   → dados pessoais
+                              /conta/pedidos  → histórico
+                              /conta/favoritos → wishlist
+  /entrar                   Login do cliente (mock — não conecta ao backend)
+  /cadastro                 Cadastro do cliente (mock)
+  /recuperar-senha          Fluxo de "esqueci a senha" (mock)
+  /privacidade              Política de privacidade
+  /termos                   Termos de uso
+  /trocas                   Política de troca e devolução
+  * (qualquer outra)        Página 404
+
+PAINEL ADMIN (com AdminLayout, sem header/footer da loja)
+  /admin/entrar                              Tela de login (JWT contra backend)
+  /admin  (autenticado)                      Dashboard (KPIs + gráficos)
+  /admin/vendas                              Vendas + pedidos recentes
+  /admin/saidas                              CRUD de despesas (saídas)
+  /admin/visitantes                          Analytics de visitas
+  /admin/pagamentos                          CRUD de métodos de pagamento
+
+
+================================================================================
+PARTE 6 — FLUXO DE AUTENTICAÇÃO ADMIN (DETALHADO)
+================================================================================
+
+1. Usuário acessa /admin/entrar
+2. Preenche email + senha
+3. Frontend chama POST /api/admin/login com { email, password }
+4. Backend verifica:
+   a) email === process.env.ADMIN_EMAIL  (case-insensitive)
+   b) bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH)
+5. Se ok, backend retorna { token: "...", expiresIn: "8h" }
+   Token é JWT assinado com process.env.ADMIN_JWT_SECRET
+6. Frontend salva token no localStorage (zustand persist com key
+   "glam-boutique-admin-auth")
+7. Próximas requests admin enviam header:
+      Authorization: Bearer <token>
+8. Backend middleware requireAdminAuth verifica o JWT em cada rota
+   protegida (salesRouter, expensesRouter, paymentMethodsRouter write,
+   analytics summary).
+9. Após 8h o token expira, frontend limpa state, user é redirecionado ao login.
+
+Modos:
+  - isBackendConfigured() === true → modo 'backend'
+  - isBackendConfigured() === false → modo 'demo' (aceita
+    admin@glamboutique.com.br + glamadmin123 hardcoded, NÃO seguro)
+
+
+================================================================================
+PARTE 7 — BANCO DE DADOS (ESQUEMA)
+================================================================================
+
+Arquivo: server/schema.sql
+Banco:  glam_boutique
+Engine: MySQL 8+ / InnoDB / utf8mb4
+
+TABELAS
+  1. customers
+     - id, full_name, email (UNIQUE), phone, created_at, updated_at
+
+  2. products
+     - id, slug (UNIQUE), name, description, price (DECIMAL),
+       category_id, brand_id, stock, images (JSON), created_at
+
+  3. orders
+     - id, order_number (UNIQUE), customer_id (FK), status,
+       payment_method (pix/cartao/boleto/carteira/custom-xxx),
+       subtotal, discount, shipping, total (DECIMAL), created_at
+
+  4. order_items
+     - id, order_id (FK), product_id (FK), product_name, quantity,
+       unit_price (DECIMAL)
+
+  5. expenses (saídas)
+     - id, description, category, amount (DECIMAL),
+       expense_date, paid (BOOLEAN), created_at
+
+  6. payment_methods
+     - id (pix/cartao/boleto/carteira/custom-*), label, enabled (BOOLEAN),
+       discount_percent, max_installments, is_custom (BOOLEAN), created_at
+
+  7. page_views (analytics real)
+     - id, session_id, path, device (mobile/desktop), referrer, viewed_at
+
+
+================================================================================
+PARTE 8 — API ENDPOINTS (REFERÊNCIA COMPLETA)
+================================================================================
+
+Públicas (sem auth):
+  GET  /api/health                     Liveness check (não toca DB)
+  GET  /api/health/db                  Testa conexão MySQL
+  POST /api/analytics/pageview         Registra visita de qualquer usuário
+  GET  /api/payment-methods            Lista métodos ativos (lido pelo checkout)
+
+Autenticação:
+  POST /api/admin/login                {email, password} → {token, expiresIn}
+
+Protegidas (header: Authorization: Bearer <token>):
+  GET  /api/sales/daily?days=N         [ {date, revenue, orders} ]
+  GET  /api/sales/orders?limit=N       Lista pedidos recentes + cliente
+  GET  /api/sales/top-products         Top 10 mais vendidos
+  GET  /api/expenses                   Lista todas as saídas
+  POST /api/expenses                   Cria saída
+  PATCH /api/expenses/:id              Atualiza saída
+  DELETE /api/expenses/:id             Remove saída
+  POST /api/payment-methods            Cria método custom (id: custom-xxx)
+  PATCH /api/payment-methods/:id       Edita método existente
+  DELETE /api/payment-methods/:id      Remove método SOMENTE se is_custom=TRUE
+  GET  /api/analytics/summary?days=N   { totals, topPages }
+
+
+================================================================================
+PARTE 9 — STORES ZUSTAND (ESTADO GLOBAL FRONTEND)
+================================================================================
+
+10 stores isoladas, cada uma com responsabilidade única:
+
+  1. adminAuthStore.ts
+     Login admin, token JWT, modo (backend | demo), persist em localStorage.
+     É a única store que conversa com a API real via apiRequest().
+
+  2. authStore.ts
+     Mock de login/cadastro de cliente. Persist em localStorage.
+     Pronto para integração futura com API de clientes.
+
+  3. cartStore.ts
+     Itens do carrinho, quantidade, cupons (GLAM10, BEMVINDA15, GLAMVIP20),
+     totais, frete. Persist em localStorage.
+
+  4. wishlistStore.ts
+     IDs de produtos favoritados. Persist em localStorage.
+
+  5. expensesStore.ts
+     Lista de saídas. Persist em localStorage (mock).
+     Pode ser ligado ao backend via apiRequest em expenses.js.
+
+  6. paymentMethodsStore.ts
+     Config de métodos (Pix, Cartão, Boleto, Carteiras, custom).
+     Persist em localStorage (mock). Lê /api/payment-methods em produção.
+
+  7. analyticsStore.ts
+     Page views por sessionId. Persist em localStorage (mock).
+     Em produção, envia para /api/analytics/pageview.
+
+  8. toastStore.ts
+     Toasts efêmeros (sucesso/erro/info). Não persist.
+
+  9. searchHistoryStore.ts
+     Últimos 8 termos pesquisados. Persist em localStorage.
+
+  10. cookieConsentStore.ts
+      Estado de consentimento de cookies (LGPD). Persist em localStorage.
+
+
+================================================================================
+PARTE 10 — PAINEL ADMINISTRATIVO (DETALHADO)
+================================================================================
+
+ACESSO
+  /admin/entrar → digita email/senha → redireciona para /admin
+  Logout limpa isAdminAuthenticated → redireciona de volta para login
+
+LAYOUT (AdminLayout)
+  - Sidebar com 5 itens de navegação (Dashboard, Vendas, Saídas,
+    Visitantes, Pagamentos)
+  - Header com nome do admin + botão sair
+  - Outlet do React Router pro conteúdo da página
+
+DASHBOARD (/admin)
+  KPIs (cards):
+    - Receita total (R$)
+    - Pedidos
+    - Ticket médio
+    - Saídas (despesas)
+    - Receita líquida (receita − saídas)
+  Gráfico de receita dos últimos 30 dias (Recharts)
+  Lista de produtos mais vendidos
+  Atalhos para todas as seções
+
+VENDAS (/admin/vendas)
+  Filtro por período: 7 / 14 / 30 dias
+  Gráfico de receita por dia
+  Tabela de pedidos recentes com:
+    Número, cliente, método de pagamento, status, total, data
+
+SAÍDAS (/admin/saidas)
+  CRUD completo:
+    - Listar todas as despesas ordenadas por data
+    - Criar nova (descrição, categoria, valor, data, status pago/pendente)
+    - Editar (toggle pago, mudar valor, etc)
+    - Remover
+  Categorias pré-definidas: Fornecedores, Marketing, Operacional, etc.
+
+VISITANTES (/admin/visitantes)
+  Cards:
+    - Total de page views
+    - Sessões únicas
+    - Mobile vs Desktop
+  Top 10 páginas mais acessadas
+  (Em produção, dados vêm de /api/analytics/summary — TODOS os visitantes)
+
+PAGAMENTOS (/admin/pagamentos)
+  Toggle on/off para cada método padrão:
+    - Pix, Cartão, Boleto, Carteiras digitais
+  Editar desconto (% à vista) e max parcelas
+  Criar método customizado (ex: "Pagamento na Entrega")
+  Remover método custom (built-ins não podem ser removidos)
+  Tudo reflete IMEDIATAMENTE no checkout da loja
+
+
+================================================================================
+PARTE 11 — CHANGELOG DE BUGS CORRIGIDOS (SESSÃO ATUAL)
+================================================================================
+
+BUG 1 — Backend não iniciava / login falhava
+  Causa: server/src/index.js.bind(PORT) → só escutava em 127.0.0.1
+          Outros PCs na rede não conseguiam acessar.
+  Fix:   app.listen(Number(PORT), '0.0.0.0', ...)
+
+BUG 2 — CORS bloqueava produção
+  Causa: cors({ origin: 'http://localhost:5173' }) → single origin.
+          Quebraria ao deployar em domínio real.
+  Fix:   cors() com origin() dinâmico que aceita lista separada por
+          vírgula em process.env.CORS_ORIGIN.
+
+BUG 3 — Erro do MySQL vazava pro cliente
+  Causa: catch blocks faziam res.json({ error, detail: error.message })
+          Exporia schema/tabela para qualquer visitante.
+  Fix:   catch agora só loga internamente com prefixo [rota.metodo]
+          e retorna mensagem genérica pro cliente.
+
+BUG 4 — ADMIN_JWT_SECRET fraco e placeholder
+  Causa: 'glam-boutique-secret-key-change-in-production' no .env
+  Fix:   Gerado via crypto.randomBytes(64).toString('hex')
+          128 caracteres hex aleatórios.
+
+BUG 5 — ADMIN_PASSWORD_HASH fraco/placeholder
+  Causa: hash bcrypt de senha desconhecida no .env
+  Fix:   Hash gerado com node scripts/hashPassword.js
+          Senha inicial: glamadmin123 (trocar antes de produção real)
+
+BUG 6 — Sem script combinado de setup do DB
+  Causa: tinha db:schema e db:seed separados; usuário tinha que rodar
+          manual na ordem certa.
+  Fix:   Adicionado db:setup (schema + seed) e db:reset em server/package.json.
+
+BUG 7 — Sem config de deploy no backend
+  Causa: zero Dockerfile / Procfile / render.yaml / railway.json
+  Fix:   server/Dockerfile + server/.dockerignore (Node 20 Alpine, healthcheck)
+          nginx.conf.example recebeu bloco location /api/ com proxy_pass.
+
+BUG 8 — Error handler genérico sem observabilidade
+  Causa: console.error('Erro não tratado:', err) → stack ia pro console
+          mas cliente só recebia 500 genérico, sem correlação.
+  Fix:   errorId gerado (err-{timestamp base36}) + log estruturado +
+          stack oculto em produção (NODE_ENV=production).
+
+BUG 9 — .env possivelmente versionado
+  Causa: risco de .env com secrets reais ir pro git.
+  Fix:   Verificado: server/.env está no .gitignore, NUNCA foi commitado.
+          Apenas .env.example foi commitado (template sem secrets).
+
+BUG 10 — README desatualizado
+  Causa: server/README.md falava em "próximo passo" integrar com backend,
+          já estava integrado mas faltava documentar.
+  Fix:   README do server reescrito com:
+           - Setup local (Workbench + terminal)
+           - Geração de secrets (comandos exatos)
+           - Scripts npm disponíveis
+           - Deploy em VPS (passo a passo Ubuntu)
+           - Alternativa Docker
+           - Checklist de segurança
+          README raiz atualizado com seção "Deploy em produção".
+
+
+================================================================================
+PARTE 12 — DEPLOY EM PRODUÇÃO (VPS ÚNICO — RECOMENDADO)
+================================================================================
+
+CUSTO ESTIMADO: ~R$30/mês (Hetzner CX22) ou ~R$50/mês (Hostinger VPS)
+
+REQUISITOS DO SERVIDOR
+  - Ubuntu 22.04+ ou Debian 12
+  - Mínimo 2GB RAM, 20GB SSD
+  - IP fixo
+
+PASSO A PASSO
+
+1) Conectar no servidor via SSH
+   $ ssh root@SEU.IP
+
+2) Instalar Node 20
+   $ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+   $ sudo apt install -y nodejs
+
+3) Instalar MySQL
+   $ sudo apt install -y mysql-server
+   $ sudo mysql_secure_installation
+   $ sudo mysql -u root -p
+     > CREATE DATABASE glam_boutique;
+     > CREATE USER 'glam'@'localhost' IDENTIFIED BY 'SENHA-FORTE';
+     > GRANT ALL PRIVILEGES ON glam_boutique.* TO 'glam'@'localhost';
+     > FLUSH PRIVILEGES;
+     > exit
+
+4) Instalar Nginx + PM2
+   $ sudo apt install -y nginx
+   $ sudo npm install -g pm2
+   $ sudo ufw allow 22,80,443
+   $ sudo ufw enable
+
+5) Clonar o projeto
+   $ sudo mkdir -p /var/www && sudo chown -R $USER /var/www
+   $ cd /var/www
+   $ git clone https://github.com/seu-usuario/glam-boutique.git
+   $ cd glam-boutique
+
+6) Backend
+   $ cd server
+   $ npm ci --omit=dev
+   $ cp .env.example .env
+   $ # Editar .env:
+   $ #   DB_USER=glam
+   $ #   DB_PASSWORD=SENHA-FORTE (a mesma do MySQL)
+   $ #   ADMIN_PASSWORD_HASH=<gerar novo>
+   $ #   ADMIN_JWT_SECRET=<gerar novo>
+   $ #   CORS_ORIGIN=https://seudominio.com.br
+   $ #   NODE_ENV=production
+   $ npm run db:setup
+   $ pm2 start src/index.js --name glam-api
+   $ pm2 startup && pm2 save
+
+7) Frontend (build)
+   $ cd ..
+   $ npm ci
+   $ VITE_API_URL=https://seudominio.com.br/api npm run build
+   $ sudo mkdir -p /var/www/glamboutique
+   $ sudo cp -r dist/* /var/www/glamboutique/
+
+8) Nginx
+   $ sudo cp nginx.conf.example /etc/nginx/sites-available/glamboutique
+   $ # editar o server_name se for diferente
+   $ sudo ln -s /etc/nginx/sites-available/glamboutique /etc/nginx/sites-enabled/
+   $ sudo rm /etc/nginx/sites-enabled/default
+
+9) HTTPS gratuito (Let's Encrypt)
+   $ sudo apt install -y certbot python3-certbot-nginx
+   $ sudo certbot --nginx -d seudominio.com.br -d www.seudominio.com.br
+   # Segue as instruções, aceita redirecionar HTTP→HTTPS
+
+10) DNS no registrador (Registro.br / Hostinger / Namecheap)
+    Tipo    Nome    Valor              TTL
+    A       @       SEU.IP.SERVIDOR    300
+    A       www     SEU.IP.SERVIDOR    300
+
+11) Teste
+    $ curl https://seudominio.com.br/api/health
+    → {"status":"ok","service":"glam-boutique-server"}
+
+    $ curl -I https://seudominio.com.br
+    → HTTP/2 200
+
+12) Manutenção
+    - Atualizar código:
+        $ cd /var/www/glam-boutique
+        $ git pull
+        $ cd server && pm2 restart glam-api
+        $ cd .. && npm ci && npm run build
+        $ sudo cp -r dist/* /var/www/glamboutique/
+
+    - Ver logs:
+        $ pm2 logs glam-api         # backend
+        $ sudo tail -f /var/log/nginx/access.log
+
+    - Backup do banco (cron diário):
+        $ sudo nano /etc/cron.daily/backup-mysql
+        #!/bin/bash
+        mysqldump -u glam -p'SENHA-FORTE' glam_boutique | gzip > /backup/glam-$(date +%F).sql.gz
+        $ sudo chmod +x /etc/cron.daily/backup-mysql
+
+
+================================================================================
+PARTE 13 — VARIÁVEIS DE AMBIENTE (REFERÊNCIA)
+================================================================================
+
+FRONTEND — raiz/.env.local  (gitignored)
+
+  VITE_API_URL=http://localhost:3333/api
+  # Em produção: VITE_API_URL=https://seudominio.com.br/api
+
+  VITE_BASE_PATH=/
+  # Para GitHub Pages: VITE_BASE_PATH=/nome-do-repo/
+
+BACKEND — server/.env  (gitignored)
+
+  DB_HOST=127.0.0.1
+  DB_PORT=3306
+  DB_USER=root
+  DB_PASSWORD=
+  DB_NAME=glam_boutique
+
+  PORT=3333
+
+  CORS_ORIGIN=http://localhost:5173
+  # Em produção com domínio real:
+  # CORS_ORIGIN=https://seudominio.com.br,https://www.seudominio.com.br
+
+  ADMIN_EMAIL=admin@seudominio.com.br
+  ADMIN_PASSWORD_HASH=<hash bcrypt>
+  ADMIN_JWT_SECRET=<128 chars hex aleatório>
+
+  NODE_ENV=production
+
+
+================================================================================
+PARTE 14 — SCRIPTS NPM DISPONÍVEIS
+================================================================================
+
+RAIZ (frontend)
+  npm run dev          → inicia Vite dev server em http://localhost:5173
+  npm run build        → build de produção (sitemap + tsc + vite build) → dist/
+  npm run build:gh-pages → build com base path para GitHub Pages
+  npm run preview      → serve o dist/ localmente pra testar o build
+  npm run sitemap      → gera sitemap.xml
+  npm run copy-404     → copia 404.html pro dist (GitHub Pages)
+
+SERVER (backend)
+  npm run dev          → node --watch src/index.js (auto-reload)
+  npm start            → node src/index.js (produção)
+  npm run db:schema    → roda schema.sql
+  npm run db:seed      → roda seed.sql
+  npm run db:setup     → schema.sql + seed.sql (ordem correta)
+  npm run db:reset     → só schema.sql (apaga e recria tabelas)
+
+
+================================================================================
+PARTE 15 — CHECKLIST DE SEGURANÇA (PRODUÇÃO)
+================================================================================
+
+  [x] Senha admin: bcrypt hash (não plain text)
+  [x] JWT: secret forte (64 bytes hex aleatórios)
+  [x] Token: expira em 8h
+  [x] CORS: lockdown com whitelist de origens
+  [x] Erros: mensagens genéricas pro cliente, stack só nos logs
+  [x] SQL: queries 100% parametrizadas (sem string concat)
+  [x] DELETE de payment_methods: bloqueia built-ins (is_custom=FALSE)
+  [x] Bind: 0.0.0.0 pra container/VPS
+  [x] .env: no .gitignore, nunca commitado
+  [x] JWT_SECRET: rotação documentada (gerar novo + reiniciar PM2)
+
+  [ ] Rate limiting em /api/admin/login
+      → Recomendo usar Nginx limit_req ou express-rate-limit
+  [ ] HTTPS: obrigatório (Certbot já configura)
+  [ ] Backups: cron diário do mysqldump
+  [ ] Firewall: só portas 22, 80, 443 abertas
+  [ ] Fail2ban: proteger SSH contra brute-force
+  [ ] Monitoramento: UptimeRobot (free) em /api/health
+
+
+================================================================================
+PARTE 16 — ATALHOS ÚTEIS DE DEBUG
+================================================================================
+
+  # Backend health
+  $ curl http://localhost:3333/api/health
+
+  # Backend MySQL check
+  $ curl http://localhost:3333/api/health/db
+
+  # Login admin via curl
+  $ curl -X POST http://localhost:3333/api/admin/login \
+      -H "Content-Type: application/json" \
+      -d '{"email":"admin@seudominio.com.br","password":"SUA-SENHA"}'
+
+  # Gerar novo JWT_SECRET
+  $ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+  # Gerar novo hash de senha
+  $ node scripts/hashPassword.js "sua-senha-nova"
+
+  # Ver logs do backend (PM2)
+  $ pm2 logs glam-api
+
+  # Tail dos logs do Nginx
+  $ sudo tail -f /var/log/nginx/error.log
+
+  # Build limpo de frontend
+  $ rm -rf dist && npm run build
+
+  # Resetar banco (apaga tudo, recria vazio)
+  $ cd server && npm run db:reset
+
+
+================================================================================
+FIM DO TUTORIAL
+================================================================================
+
+Dúvidas? Olhe:
+  - README.md (raiz)
+  - server/README.md
+  - nginx.conf.example
+  - server/Dockerfile
+
+Próximos passos sugeridos:
+  1. Trocar senha admin (PASSO 6) — glamadmin123 é só pra demo
+  2. Configurar SMTP pra emails transacionais (esqueci senha, confirmações)
+  3. Integrar gateway de pagamento real (Mercado Pago, Stripe, PagSeguro)
+  4. Adicionar analytics de verdade (Google Analytics 4)
+  5. SSL pinning no PWA (se for virar PWA)
+  6. Wire do expensesStore/paymentMethodsStore/analyticsStore no backend
+     (hoje só adminAuthStore está realmente conectado à API)
+
+================================================================================
