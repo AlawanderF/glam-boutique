@@ -1,0 +1,55 @@
+name: Slack Notification
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    steps:
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK" ]; then
+            echo "SLACK_WEBHOOK not configured, skipping notification"
+            exit 0
+          fi
+
+          REPO="${{ github.repository }}"
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+
+          COLOR=$([ "$CONCLUSION" = "failure" ] && echo "danger" || echo "warning")
+          EMOJI=$([ "$CONCLUSION" = "failure" ] && echo ":rotating_light:" || echo ":warning:")
+
+          curl -X POST "$SLACK_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"attachments\": [{
+                \"color\": \"$COLOR\",
+                \"blocks\": [
+                  {
+                    \"type\": \"header\",
+                    \"text\": {
+                      \"type\": \"plain_text\",
+                      \"text\": \"$EMOJI CI $CONCLUSION: $REPO\"
+                    }
+                  },
+                  {
+                    \"type\": \"section\",
+                    \"fields\": [
+                      { \"type\": \"mrkdwn\", \"text\": \"*Branch:* `$BRANCH`\" },
+                      { \"type\": \"mrkdwn\", \"text\": \"*Run:* <https://github.com/$REPO/actions/runs/$RUN_ID|View logs>\" }
+                    ]
+                  }
+                ]
+              }]
+            }"
