@@ -1,10 +1,20 @@
 import { useState } from 'react';
-import { Plus, Trash2, Check, X } from 'lucide-react';
+import { Plus, Trash2, Check, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { useExpensesStore } from '@/store/expensesStore';
 import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { formatCurrency, classNames } from '@/utils/format';
 import type { ExpenseCategory } from '@/types/admin';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 
 const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   fornecedores: 'Fornecedores',
@@ -15,6 +25,18 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   impostos: 'Impostos',
   outros: 'Outros',
 };
+
+function groupByMonth(expenses: { expenseDate: string; amount: number }[]) {
+  const grouped: Record<string, number> = {};
+  expenses.forEach((exp) => {
+    const month = new Date(exp.expenseDate).toLocaleDateString('pt-BR', {
+      month: 'short',
+      year: '2-digit',
+    });
+    grouped[month] = (grouped[month] || 0) + exp.amount;
+  });
+  return Object.entries(grouped).map(([month, total]) => ({ month, total }));
+}
 
 const EMPTY_FORM = {
   description: '',
@@ -28,6 +50,27 @@ export default function Expenses() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+
+  const filteredExpenses = filterCategory
+    ? expenses.filter((e) => e.category === filterCategory)
+    : expenses;
+
+  const currentMonth = expenses
+    .filter((e) => new Date(e.expenseDate).getMonth() === new Date().getMonth())
+    .reduce((s, e) => s + e.amount, 0);
+
+  const lastMonth = expenses
+    .filter((e) => {
+      const d = new Date(e.expenseDate);
+      return (
+        d.getMonth() === new Date().getMonth() - 1 ||
+        (new Date().getMonth() === 0 && d.getMonth() === 11)
+      );
+    })
+    .reduce((s, e) => s + e.amount, 0);
+
+  const trend = lastMonth > 0 ? ((currentMonth - lastMonth) / lastMonth * 100).toFixed(1) : '0';
 
   const categoryTotals = totalByCategory();
 
@@ -109,6 +152,12 @@ export default function Expenses() {
         <div className="border border-ink-200 bg-cream-50 p-5">
           <span className="text-xs font-semibold uppercase tracking-wider text-ink-500">Total de saídas</span>
           <p className="mt-2 font-display text-2xl text-danger">{formatCurrency(totalAmount())}</p>
+          {Number(trend) !== 0 && (
+            <div className={classNames('mt-2 flex items-center gap-1 text-xs font-medium', Number(trend) > 0 ? 'text-danger' : 'text-success')}>
+              {Number(trend) > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              <span>{Math.abs(Number(trend))}% vs mês anterior</span>
+            </div>
+          )}
         </div>
         {(Object.entries(categoryTotals) as [ExpenseCategory, number][]).slice(0, 3).map(([category, amount]) => (
           <div key={category} className="border border-ink-200 bg-cream-50 p-5">
@@ -118,8 +167,46 @@ export default function Expenses() {
         ))}
       </div>
 
+      {expenses.length > 0 && (
+        <div className="bg-white rounded-xl p-5">
+          <h3 className="font-semibold text-sm text-gray-600 mb-4">
+            Despesas por Mês
+          </h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={groupByMonth(expenses)}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={(v) => `R$ ${v}`} tick={{ fontSize: 12 }} />
+              <Tooltip
+                formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Total']}
+                contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+              />
+              <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+                {groupByMonth(expenses).map((_, index) => (
+                  <Cell key={`cell-${index}`} fill="#D4AF37" />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
       <div className="border border-ink-200 bg-cream-50 p-6">
-        <h2 className="font-display text-lg text-ink-900">Histórico de saídas</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg text-ink-900">Histórico de saídas</h2>
+          <select
+            value={filterCategory || ''}
+            onChange={(e) => setFilterCategory(e.target.value || null)}
+            className="border border-ink-300 bg-cream-50 px-3 py-1.5 text-sm focus:outline-none focus:border-gold-500"
+          >
+            <option value="">Todas as categorias</option>
+            {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
@@ -133,7 +220,7 @@ export default function Expenses() {
               </tr>
             </thead>
             <tbody>
-              {expenses.map((expense) => (
+              {filteredExpenses.map((expense) => (
                 <tr key={expense.id} className="border-b border-ink-100">
                   <td className="py-3 pr-4 text-ink-800">{expense.description}</td>
                   <td className="py-3 pr-4 text-ink-600">{CATEGORY_LABELS[expense.category]}</td>

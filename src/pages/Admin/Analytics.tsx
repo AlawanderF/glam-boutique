@@ -1,12 +1,21 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Eye, Users, Smartphone, Monitor, Globe, Clock,
-  TrendingUp, TrendingDown, ArrowUp, ArrowDown, ShoppingBag
+  TrendingUp, ArrowUp, ArrowDown, ShoppingBag, Loader2
 } from 'lucide-react';
 import { KpiCard } from '@/components/admin/KpiCard';
 import { useAnalyticsStore } from '@/store/analyticsStore';
+import { useAdminAuthStore } from '@/store/adminAuthStore';
 import { trafficSources, dailySales } from '@/constants/salesData';
 import { formatCurrency } from '@/utils/format';
+
+interface BackendAnalytics {
+  totalViews: number;
+  uniqueSessions: number;
+  mobilePercent: string;
+  topPages: Array<{ path: string; views: number }>;
+  loading: boolean;
+}
 
 export default function Analytics() {
   const pageViews = useAnalyticsStore((s) => s.pageViews);
@@ -14,11 +23,61 @@ export default function Analytics() {
   const getUniqueSessions = useAnalyticsStore((s) => s.getUniqueSessions);
   const getViewsByPath = useAnalyticsStore((s) => s.getViewsByPath);
 
-  const metrics = useMemo(() => {
-    const totalViews = getTotalViews();
-    const uniqueSessions = getUniqueSessions();
-    const viewsByPath = getViewsByPath();
+  const [analyticsData, setAnalyticsData] = useState<BackendAnalytics>({
+    totalViews: 0,
+    uniqueSessions: 0,
+    mobilePercent: '0',
+    topPages: [],
+    loading: true,
+  });
 
+  // Buscar summary do backend
+  useEffect(() => {
+    async function fetchAnalytics() {
+      const token = useAdminAuthStore.getState().token;
+      if (!token) {
+        setAnalyticsData(d => ({ ...d, loading: false }));
+        return;
+      }
+
+      try {
+        const headers = { 'Authorization': `Bearer ${token}` };
+        const res = await fetch('/api/analytics/summary?days=30', { headers });
+        const data = await res.json();
+
+        setAnalyticsData({
+          totalViews: data.totals?.total_views || 0,
+          uniqueSessions: data.totals?.unique_sessions || 0,
+          mobilePercent: data.totals?.mobile_views && data.totals?.total_views
+            ? (data.totals.mobile_views / data.totals.total_views * 100).toFixed(1)
+            : '0',
+          topPages: data.topPages || [],
+          loading: false,
+        });
+      } catch {
+        setAnalyticsData(d => ({ ...d, loading: false }));
+      }
+    }
+    fetchAnalytics();
+  }, []);
+
+  // Manter pageviews locais como fallback
+  const localViewsCount = pageViews.length;
+
+  // Se backend tem dados, usar; senão usar local
+  const displayTotalViews = analyticsData.totalViews > 0
+    ? analyticsData.totalViews
+    : localViewsCount;
+
+  const displayUniqueSessions = analyticsData.uniqueSessions > 0
+    ? analyticsData.uniqueSessions
+    : getUniqueSessions();
+
+  const displayTopPages = analyticsData.topPages.length > 0
+    ? analyticsData.topPages
+    : getViewsByPath().map(p => ({ path: p.path, views: p.count }));
+
+  const metrics = useMemo(() => {
     const mobileViews = pageViews.filter((v) => v.device === 'mobile').length;
     const desktopViews = pageViews.length - mobileViews;
 
@@ -41,26 +100,32 @@ export default function Analytics() {
     const recentOrders = last7Days.reduce((s, d) => s + d.orders, 0);
     const previousOrders = previous7Days.reduce((s, d) => s + d.orders, 0);
     const ordersGrowth = previousOrders > 0
-      ? ((recentOrders - previousOrders) / previousOrders) * 100
+      ? ((recentOrders - previousOrders) / previousOrders) / previousOrders * 100
       : 0;
 
     return {
-      totalViews,
-      uniqueSessions,
       mobileViews,
       desktopViews,
       directTraffic,
       socialTraffic,
       searchTraffic,
-      viewsByPath,
       recentRevenue,
       revenueGrowth,
       recentOrders,
       ordersGrowth,
     };
-  }, [pageViews, getTotalViews, getUniqueSessions, getViewsByPath]);
+  }, [pageViews]);
 
-  const maxViewCount = Math.max(...metrics.viewsByPath.slice(0, 8).map((p) => p.count), 1);
+  const maxViewCount = displayTopPages.length > 0
+    ? Math.max(...displayTopPages.slice(0, 10).map((p) => p.views), 1)
+    : 1;
+
+  // KPI de últimos 7 dias
+  const last7DaysViews = useMemo(() => {
+    return displayTopPages.slice(0, 10).reduce((s, p) => s + p.views, 0);
+  }, [displayTopPages]);
+
+  const isBackendData = analyticsData.totalViews > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,8 +134,9 @@ export default function Analytics() {
         <span className="eyebrow">Métricas</span>
         <h1 className="mt-1 font-display text-3xl text-ink-900">Visitantes e tráfego</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-500">
-          Dados combinados de visitas rastreadas (neste navegador) com métricas ilustrativas.
-          Para analytics consolidado de todos os visitantes, configure o backend MySQL.
+          {isBackendData
+            ? 'Dados consolidados do backend MySQL para os últimos 30 dias.'
+            : 'Dados combinados de visitas rastreadas (neste navegador). Configure o backend para dados consolidados.'}
         </p>
       </div>
 
@@ -78,29 +144,29 @@ export default function Analytics() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Visualizações de página"
-          value={String(metrics.totalViews)}
+          value={String(displayTotalViews)}
           icon={Eye}
           accent="ink"
           trend={{ value: 12.5, isPositive: true }}
         />
         <KpiCard
           label="Sessões únicas"
-          value={String(metrics.uniqueSessions)}
+          value={String(displayUniqueSessions)}
           icon={Users}
           accent="gold"
           trend={{ value: 8.3, isPositive: true }}
         />
         <KpiCard
           label="Tráfego mobile"
-          value={`${metrics.totalViews > 0 ? Math.round((metrics.mobileViews / metrics.totalViews) * 100) : 0}%`}
+          value={`${analyticsData.mobilePercent}%`}
           icon={Smartphone}
           accent="ink"
         />
         <KpiCard
-          label="Tráfego desktop"
-          value={`${metrics.totalViews > 0 ? Math.round((metrics.desktopViews / metrics.totalViews) * 100) : 0}%`}
-          icon={Monitor}
-          accent="ink"
+          label="Últimos 7 dias"
+          value={String(last7DaysViews)}
+          icon={TrendingUp}
+          accent="gold"
         />
       </div>
 
@@ -111,35 +177,46 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg text-ink-900">Páginas mais visitadas</h2>
             <span className="rounded-full bg-ink-100 px-2.5 py-0.5 text-xs font-medium text-ink-600">
-              {metrics.viewsByPath.length} páginas
+              {displayTopPages.length} páginas
             </span>
           </div>
-          <div className="mt-4 space-y-3">
-            {metrics.viewsByPath.slice(0, 8).map((page, i) => {
-              const percentage = (page.count / maxViewCount) * 100;
-              return (
+
+          {analyticsData.loading ? (
+            <div className="mt-4 space-y-3">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="animate-pulse">
+                  <div className="flex justify-between mb-1">
+                    <div className="h-4 w-24 rounded bg-ink-200" />
+                    <div className="h-4 w-16 rounded bg-ink-200" />
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-ink-200" />
+                </div>
+              ))}
+            </div>
+          ) : displayTopPages.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {displayTopPages.slice(0, 10).map((page, i) => (
                 <div key={page.path}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-ink-700">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="font-medium truncate max-w-[60%] text-ink-700">
                       {page.path === '/' ? 'Home' : page.path.replace(/\//g, ' > ').replace(/^-/, '')}
                     </span>
-                    <span className="font-medium text-ink-900">{page.count}</span>
+                    <span className="text-gray-500">{page.views.toLocaleString()} visitas</span>
                   </div>
-                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-ink-100">
+                  <div className="h-2 bg-ink-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-ink-900 transition-all duration-500"
-                      style={{ width: `${percentage}%` }}
+                      className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
+                      style={{ width: `${(page.views / maxViewCount) * 100}%` }}
                     />
                   </div>
                 </div>
-              );
-            })}
-            {metrics.viewsByPath.length === 0 && (
-              <p className="py-8 text-center text-sm text-ink-400">
-                Navegue pela loja para ver dados de páginas
-              </p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-ink-400">
+              Navegue pela loja para ver dados de páginas
+            </p>
+          )}
         </div>
 
         {/* Traffic Sources */}
@@ -150,9 +227,9 @@ export default function Analytics() {
               { label: 'Direto', value: metrics.directTraffic || 156, color: 'bg-ink-900', icon: Globe },
               { label: 'Redes sociais', value: metrics.socialTraffic || 89, color: 'bg-gold-500', icon: Globe },
               { label: 'Busca orgânica', value: metrics.searchTraffic || 234, color: 'bg-success', icon: Globe },
-              { label: 'Outros', value: Math.max(0, metrics.totalViews - metrics.directTraffic - metrics.socialTraffic - metrics.searchTraffic) || 45, color: 'bg-ink-300', icon: Globe },
+              { label: 'Outros', value: Math.max(0, displayTotalViews - metrics.directTraffic - metrics.socialTraffic - metrics.searchTraffic) || 45, color: 'bg-ink-300', icon: Globe },
             ].map((source) => {
-              const total = metrics.totalViews || 524;
+              const total = displayTotalViews || 524;
               const percentage = total > 0 ? (source.value / total) * 100 : 0;
               return (
                 <div key={source.label} className="flex items-center gap-4">
@@ -237,7 +314,7 @@ export default function Analytics() {
             <div>
               <p className="text-2xs text-ink-500 uppercase tracking-wider">Mobile</p>
               <p className="mt-1 font-display text-2xl text-ink-900">
-                {metrics.totalViews > 0 ? Math.round((metrics.mobileViews / metrics.totalViews) * 100) : 58}%
+                {analyticsData.mobilePercent}%
               </p>
             </div>
           </div>
@@ -246,7 +323,7 @@ export default function Analytics() {
             <div>
               <p className="text-2xs text-ink-500 uppercase tracking-wider">Desktop</p>
               <p className="mt-1 font-display text-2xl text-ink-900">
-                {metrics.totalViews > 0 ? Math.round((metrics.desktopViews / metrics.totalViews) * 100) : 42}%
+                {(100 - parseFloat(analyticsData.mobilePercent)).toFixed(1)}%
               </p>
             </div>
           </div>
