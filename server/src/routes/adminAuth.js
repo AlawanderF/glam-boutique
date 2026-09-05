@@ -14,7 +14,7 @@ const COOKIE_MAX_AGE = 8 * 60 * 60 * 1000; // 8 hours in ms
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: 'lax',
   maxAge: COOKIE_MAX_AGE,
   path: '/',
 };
