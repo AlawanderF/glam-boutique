@@ -1,12 +1,35 @@
 {
   "name": "glam-boutique-server",
   "version": "1.0.0",
-  "description": "API backend da Glam Boutique — integração com MySQL para vendas, saídas, analytics e métodos de pagamento.",
+  "private": true,
+  "description": "API backend para Glam Boutique — MySQL, autenticação JWT, analytics, vendas e controle de despesas",
+  "author": "AlawanderF",
+  "license": "MIT",
+  "keywords": [
+    "api",
+    "backend",
+    "express",
+    "mysql",
+    "glam-boutique",
+    "jwt"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlawanderF/glam-boutique.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AlawanderF/glam-boutique/issues"
+  },
+  "homepage": "https://github.com/AlawanderF/glam-boutique#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "type": "module",
-  "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
     "db:schema": "node scripts/runSqlFile.js schema.sql",
     "db:seed": "node scripts/runSqlFile.js seed.sql",
     "db:setup": "node scripts/runSqlFile.js schema.sql && node scripts/runSqlFile.js seed.sql",
@@ -22,5 +45,9 @@
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.11.0",
     "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "@types/express": "^4.17.21"
   }
 }

@@ -1,16 +1,43 @@
 {
   "name": "glam-boutique",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
+  "description": "E-commerce completo para Glam Boutique — roupas, calçados e acessórios com painel administrativo",
+  "author": "AlawanderF",
+  "license": "MIT",
+  "keywords": [
+    "e-commerce",
+    "boutique",
+    "fashion",
+    "react",
+    "vite",
+    "typescript",
+    "zustand",
+    "tailwindcss"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlawanderF/glam-boutique.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AlawanderF/glam-boutique/issues"
+  },
+  "homepage": "https://github.com/AlawanderF/glam-boutique#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "sitemap": "node scripts/generate-sitemap.mjs",
-    "copy-404": "node scripts/copy-404.mjs",
     "build": "npm run sitemap && tsc -b && vite build",
     "build:gh-pages": "npm run sitemap && tsc -b && vite build && npm run copy-404",
+    "preview": "vite preview",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "copy-404": "node scripts/copy-404.mjs",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
