@@ -1,0 +1,56 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "AlawanderF"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore(dev)"
+      include: "scope"
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        labels:
+          - "dependencies"
+          - "production"
+      development-dependencies:
+        dependency-type: "development"
+        labels:
+          - "dependencies"
+          - "development"
+
+  - package-ecosystem: "npm"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "AlawanderF"
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore(server)"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    reviewers:
+      - "AlawanderF"
+    labels:
+      - "dependencies"
+      - "ci"

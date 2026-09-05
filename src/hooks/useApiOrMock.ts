@@ -55,8 +55,7 @@ export function useApiOrMock<T>(
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [fetcher, mockData, mockFallback]);
 
   useEffect(() => {
     if (immediate) {

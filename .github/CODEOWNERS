@@ -1,0 +1,22 @@
+# CODEOWNERS — quem deve revisar mudanças em cada parte do código
+# GitHub exige que pelo menos um owner aprove antes do merge.
+
+# Owners globais — fallback para qualquer arquivo
+*       @AlawanderF
+
+# Frontend
+/src/                  @AlawanderF
+
+# Backend
+/server/               @AlawanderF
+
+# CI/CD e infraestrutura
+/.github/              @AlawanderF
+/.env.example          @AlawanderF
+
+# Documentação
+/README.md             @AlawanderF
+/CLAUDE.md             @AlawanderF
+/CONTRIBUTING.md       @AlawanderF
+/CHANGELOG.md          @AlawanderF
+/LICENSE               @AlawanderF
