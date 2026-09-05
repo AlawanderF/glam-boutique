@@ -11,6 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
   isLoading?: boolean;
   fullWidth?: boolean;
+  ariaLabel?: string;
 }
 
 const variantClass: Record<Variant, string> = {
@@ -28,16 +29,22 @@ const sizeClass: Record<Size, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', isLoading, fullWidth, className, children, disabled, ...rest }, ref) => {
+  ({ variant = 'primary', size = 'md', isLoading, fullWidth, className, children, disabled, ariaLabel, ...rest }, ref) => {
+    const isIconOnly = !children && ariaLabel;
+
     return (
       <button
         ref={ref}
         className={classNames(variantClass[variant], sizeClass[size], fullWidth && 'w-full', className)}
         disabled={disabled || isLoading}
+        aria-label={ariaLabel}
+        aria-disabled={disabled || isLoading}
+        aria-busy={isLoading}
         {...rest}
       >
         {isLoading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
         {children}
+        {isLoading && <span className="sr-only">Carregando...</span>}
       </button>
     );
   }

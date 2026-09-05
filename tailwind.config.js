@@ -62,6 +62,7 @@ export default {
         'fade-up': 'fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards',
         shimmer: 'shimmer 1.8s ease-in-out infinite',
         marquee: 'marquee 28s linear infinite',
+        'slide-in-right': 'slide-in-right 0.3s ease-out',
       },
       keyframes: {
         fadeUp: {
@@ -75,6 +76,10 @@ export default {
         marquee: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
+        },
+        'slide-in-right': {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
         },
       },
       maxWidth: {

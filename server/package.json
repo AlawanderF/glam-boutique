@@ -28,6 +28,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "test": "node --test",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "db:schema": "node scripts/runSqlFile.js schema.sql",
@@ -36,18 +37,18 @@
     "db:reset": "node scripts/runSqlFile.js schema.sql"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.11.0",
+    "mysql2": "^3.11.5",
     "nodemailer": "^6.9.16"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "@types/express": "^4.17.21"
+    "@types/express": "^4.17.21",
+    "eslint": "^8.57.0"
   }
 }
