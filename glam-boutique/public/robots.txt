@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /conta
-Disallow: /checkout
-Disallow: /carrinho
-
-Sitemap: https://www.glamboutique.com.br/sitemap.xml
