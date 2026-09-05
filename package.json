@@ -38,8 +38,7 @@
     "sitemap": "node scripts/generate-sitemap.mjs",
     "copy-404": "node scripts/copy-404.mjs",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui",
-    "test": "vitest run"
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
