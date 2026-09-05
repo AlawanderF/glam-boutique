@@ -41,8 +41,8 @@ DB_PASSWORD=
 DB_NAME=glam_boutique
 
 # CORS — múltiplas origens separadas por vírgula
-# (vite dev = http://localhost:5173; produção = https://seudominio.com.br)
-CORS_ORIGIN=http://localhost:5173
+# (vite dev = http://localhost:3000; produção = https://seudominio.com.br)
+CORS_ORIGIN=http://localhost:3000
 
 # Autenticação admin
 ADMIN_EMAIL=admin@seudominio.com.br
@@ -63,14 +63,14 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### 3. Rodar a API
 
 ```bash
-npm run dev    # http://localhost:3333, reinicia a cada alteração
+npm run dev    # http://localhost:8000, reinicia a cada alteração
 ```
 
 **Teste se está funcionando:**
 
 ```bash
-curl http://localhost:3333/api/health        # não depende do banco
-curl http://localhost:3333/api/health/db     # testa conexão MySQL real
+curl http://localhost:8000/api/health        # não depende do banco
+curl http://localhost:8000/api/health/db     # testa conexão MySQL real
 ```
 
 Se `/api/health/db` retornar `disconnected`, confira credenciais no `.env` e se o MySQL está rodando.
@@ -165,7 +165,7 @@ A       www     <IP-DO-VPS>          300
 ```bash
 cd server
 docker build -t glam-boutique-api .
-docker run -d --name glam-api -p 3333:3333 --env-file .env --restart unless-stopped glam-boutique-api
+docker run -d --name glam-api -p 8000:8000 --env-file .env --restart unless-stopped glam-boutique-api
 ```
 
 ---

@@ -28,7 +28,7 @@ Plataforma de e-commerce de moda de nível enterprise, construída com React 19,
 npm install
 
 # 2. Ambiente de desenvolvimento
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:3000
 
 # 3. Build de produção
 npm run build       # gera /dist
@@ -155,13 +155,13 @@ npm install
 cp .env.example .env
 # Edite .env com suas credenciais MySQL + ADMIN_PASSWORD_HASH + ADMIN_JWT_SECRET
 npm run db:setup   # cria banco + popula com dados de exemplo
-npm run dev        # API em http://localhost:3333
+npm run dev        # API em http://localhost:8000
 ```
 
 Para o frontend usar o backend local, crie `.env.local` na raiz do projeto:
 
 ```bash
-echo 'VITE_API_URL=http://localhost:3333/api' > .env.local
+echo 'VITE_API_URL=http://localhost:8000/api' > .env.local
 ```
 
 ---
@@ -238,7 +238,7 @@ mysql -u root -p -e "CREATE DATABASE glam_boutique;"
 npm run db:setup   # executa schema.sql + seed.sql
 
 # 6. Iniciar API
-npm run dev        # http://localhost:3333
+npm run dev        # http://localhost:8000
 ```
 
 ---
@@ -266,7 +266,7 @@ Recomendado: [**Resend**](https://resend.com) (500 emails grátis/mês) ou SendG
 Crie `.env.local` na raiz do projeto:
 
 ```bash
-VITE_API_URL=http://localhost:3333/api    # desenvolvimento
+VITE_API_URL=http://localhost:8000/api    # desenvolvimento
 VITE_GA4_ID=G-XXXXXXXXXX                   # opcional
 ```
 

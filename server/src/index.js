@@ -11,7 +11,7 @@ import { paymentMethodsRouter } from './routes/paymentMethods.js';
 import { analyticsRouter } from './routes/analytics.js';
 
 const app = express();
-const PORT = process.env.PORT ?? 3333;
+const PORT = process.env.PORT ?? 8000;
 
 // Security headers
 app.use(helmet());
@@ -36,7 +36,7 @@ const globalLimiter = rateLimit({
 
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
+    const allowed = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
       .split(',')
       .map((o) => o.trim())
       .filter(Boolean);

@@ -129,7 +129,7 @@ Frontend (.env):
 
 Backend (.env):
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
-- `PORT` — Porta do servidor (default: 3333)
+- `PORT` — Porta do servidor (default: 8000)
 - `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_JWT_SECRET`
 - `CORS_ORIGIN` — Origens permitidas (vírgulas para múltiplas)
 - `SMTP_*` — Configuração de email
@@ -137,5 +137,5 @@ Backend (.env):
 ## Deploy
 
 - **Frontend**: Vercel, Netlify ou GitHub Pages
-- **Backend**: Node.js server (porta 3333)
+- **Backend**: Node.js server (porta 8000)
 - Ver `vercel.json`, `netlify.toml`, `nginx.conf.example`
