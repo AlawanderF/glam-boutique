@@ -3,8 +3,36 @@ import { persist } from 'zustand/middleware';
 
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 
+function decodeToken(token: string): { exp: number } | null {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+function isTokenValid(token: string): boolean {
+  const decoded = decodeToken(token);
+  if (!decoded) return false;
+  return decoded.exp * 1000 > Date.now();
+}
+
 function isBackendConfigured(): boolean {
   return Boolean(API_URL && API_URL.trim().length > 0);
+}
+
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const token = useAdminAuthStore.getState().token;
+  if (!token) return {};
+  return { 'Authorization': `Bearer ${token}` };
 }
 
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -12,10 +40,13 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
     throw new Error('VITE_API_URL não configurada.');
   }
 
+  const authHeaders = await getAuthHeaders();
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options.headers,
     },
   });
@@ -37,11 +68,12 @@ interface AdminAuthState {
   mode: AdminAuthMode;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
+  isValid: () => boolean;
 }
 
 export const useAdminAuthStore = create<AdminAuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isAdminAuthenticated: false,
       adminName: null,
       token: null,
@@ -73,7 +105,22 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       },
 
       logout: () => set({ isAdminAuthenticated: false, adminName: null, token: null }),
+
+      isValid: () => {
+        const { token, isAdminAuthenticated } = get();
+        if (!isAdminAuthenticated || !token) return false;
+        return isTokenValid(token);
+      },
     }),
     { name: 'glam-boutique-admin-auth' }
   )
 );
+
+// Verificar token expirado periodicamente
+const token = useAdminAuthStore.getState().token;
+if (token && !isTokenValid(token)) {
+  useAdminAuthStore.getState().logout();
+  if (typeof window !== 'undefined') {
+    window.location.href = '/admin/login?expired=true';
+  }
+}

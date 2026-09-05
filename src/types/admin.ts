@@ -12,7 +12,7 @@ export interface Expense {
   description: string;
   category: ExpenseCategory;
   amount: number;
-  date: string; // ISO
+  expenseDate: string; // ISO
   paid: boolean;
 }
 

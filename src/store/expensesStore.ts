@@ -12,12 +12,12 @@ interface ExpensesState {
 }
 
 const seedExpenses: Expense[] = [
-  { id: 'exp-1', description: 'Aluguel da loja - Centro, Guarabira', category: 'aluguel', amount: 2200, date: '2026-06-05', paid: true },
-  { id: 'exp-2', description: 'Compra de mercadoria - coleção inverno', category: 'fornecedores', amount: 8450, date: '2026-06-08', paid: true },
-  { id: 'exp-3', description: 'Campanha de tráfego pago - Instagram', category: 'marketing', amount: 950, date: '2026-06-10', paid: true },
-  { id: 'exp-4', description: 'Folha de pagamento - equipe de vendas', category: 'salarios', amount: 4300, date: '2026-06-05', paid: true },
-  { id: 'exp-5', description: 'Frete de reposição de estoque', category: 'logistica', amount: 620, date: '2026-06-15', paid: false },
-  { id: 'exp-6', description: 'DAS - Simples Nacional', category: 'impostos', amount: 780, date: '2026-06-20', paid: false },
+  { id: 'exp-1', description: 'Aluguel da loja - Centro, Guarabira', category: 'aluguel', amount: 2200, expenseDate: '2026-06-05', paid: true },
+  { id: 'exp-2', description: 'Compra de mercadoria - coleção inverno', category: 'fornecedores', amount: 8450, expenseDate: '2026-06-08', paid: true },
+  { id: 'exp-3', description: 'Campanha de tráfego pago - Instagram', category: 'marketing', amount: 950, expenseDate: '2026-06-10', paid: true },
+  { id: 'exp-4', description: 'Folha de pagamento - equipe de vendas', category: 'salarios', amount: 4300, expenseDate: '2026-06-05', paid: true },
+  { id: 'exp-5', description: 'Frete de reposição de estoque', category: 'logistica', amount: 620, expenseDate: '2026-06-15', paid: false },
+  { id: 'exp-6', description: 'DAS - Simples Nacional', category: 'impostos', amount: 780, expenseDate: '2026-06-20', paid: false },
 ];
 
 export const useExpensesStore = create<ExpensesState>()(

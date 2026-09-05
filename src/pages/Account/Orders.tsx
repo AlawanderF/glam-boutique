@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, ChevronDown, Package } from 'lucide-react';
-import { mockOrders, type OrderStatus } from '@/constants/orders';
+import { mockOrders as ordersData, type OrderStatus } from '@/constants/orders';
 import { formatCurrency, classNames } from '@/utils/format';
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> = {
@@ -11,9 +11,11 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> =
 };
 
 export default function Orders() {
-  const [expandedId, setExpandedId] = useState<string | null>(mockOrders[0]?.id ?? null);
+  const orders: typeof mockOrders = ordersData || [];
+  const initialExpandedId = orders.length > 0 ? orders[0]?.id ?? null : null;
+  const [expandedId, setExpandedId] = useState<string | null>(initialExpandedId);
 
-  if (mockOrders.length === 0) {
+  if (orders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center border border-ink-200 py-20 text-center">
         <Package className="h-10 w-10 text-ink-300" />
@@ -24,7 +26,7 @@ export default function Orders() {
 
   return (
     <div className="flex flex-col gap-5">
-      {mockOrders.map((order) => {
+      {orders.map((order) => {
         const isExpanded = expandedId === order.id;
         const statusConfig = STATUS_CONFIG[order.status];
 

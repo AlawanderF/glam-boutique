@@ -33,16 +33,17 @@ export default function ProductPage() {
   const { toggleFavorite, isFavorite } = useFavoriteToggle();
   const navigate = useNavigate();
 
-  // Ajuste de estado durante a renderização (sem useEffect) quando o produto exibido muda
-  // (ex.: navegação entre páginas de produtos diferentes via links de cross-sell).
+  // Atualiza estado quando o produto exibido muda (ex.: navegação entre páginas de produtos diferentes via links de cross-sell).
   const [activeProductId, setActiveProductId] = useState(product?.id);
-  if (product && product.id !== activeProductId) {
-    setActiveProductId(product.id);
-    setSelectedColor(product.colors[0]?.name);
-    setSelectedSize(product.sizes.find((s) => s.inStock)?.label);
-    setQuantity(1);
-    setSizeError(false);
-  }
+  useEffect(() => {
+    if (product && product.id !== activeProductId) {
+      setActiveProductId(product.id);
+      setSelectedColor(product.colors[0]?.name);
+      setSelectedSize(product.sizes.find((s) => s.inStock)?.label);
+      setQuantity(1);
+      setSizeError(false);
+    }
+  }, [product?.id, activeProductId]);
 
   // Efeito legítimo: sincroniza com o sistema externo (rolagem do navegador).
   useEffect(() => {

@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import 'dotenv/config';
 import { checkDatabaseConnection } from './db.js';
 import { adminAuthRouter } from './routes/adminAuth.js';
@@ -10,6 +12,18 @@ import { analyticsRouter } from './routes/analytics.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3333;
+
+// Security headers
+app.use(helmet());
+
+// Rate limiting para login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // 5 tentativas
+  message: { error: 'Muitas tentativas. Tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -39,6 +53,8 @@ app.get('/api/health/db', async (_req, res) => {
   }
 });
 
+// Aplicar rate limiting apenas na rota de login (antes do router)
+app.use('/api/admin/login', loginLimiter);
 app.use('/api/admin', adminAuthRouter);
 app.use('/api/sales', salesRouter);
 app.use('/api/expenses', expensesRouter);

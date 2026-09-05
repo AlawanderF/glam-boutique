@@ -12,6 +12,11 @@ export default function PaymentMethods() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
+  const [editingDiscount, setEditingDiscount] = useState<{ id: number; value: string } | null>(null);
+
+  const handleDiscountUpdate = async (id: number, discount: number) => {
+    updateMethod(id, { discountPercent: discount || undefined });
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,11 +113,7 @@ export default function PaymentMethods() {
               </label>
               <button
                 type="button"
-                onClick={() => {
-                  const newDiscount = window.prompt('Novo desconto (%) — deixe vazio para remover', String(method.discountPercent ?? ''));
-                  if (newDiscount === null) return;
-                  updateMethod(method.id, { discountPercent: newDiscount ? Number(newDiscount) : undefined });
-                }}
+                onClick={() => setEditingDiscount({ id: method.id, value: String(method.discountPercent ?? '') })}
                 className="link-underline text-2xs font-semibold uppercase tracking-wider text-ink-500 hover:text-ink-900"
               >
                 Editar desconto
@@ -130,6 +131,36 @@ export default function PaymentMethods() {
           </div>
         ))}
       </div>
+
+      {editingDiscount && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-80">
+            <h3 className="text-lg font-semibold mb-4">Editar Desconto</h3>
+            <input
+              type="number"
+              value={editingDiscount.value}
+              onChange={(e) => setEditingDiscount({ ...editingDiscount, value: e.target.value })}
+              className="w-full border rounded px-3 py-2 mb-4"
+              min="0"
+              max="100"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setEditingDiscount(null)} className="px-4 py-2 text-gray-600">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  handleDiscountUpdate(editingDiscount.id, Number(editingDiscount.value));
+                  setEditingDiscount(null);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

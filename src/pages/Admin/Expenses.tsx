@@ -34,15 +34,11 @@ export default function Expenses() {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     const amountNumber = Number(form.amount.replace(',', '.'));
-    if (!form.description.trim()) {
-      setError('Informe uma descrição para a saída.');
-      return;
-    }
-    if (!amountNumber || amountNumber <= 0) {
+    if (isNaN(amountNumber) || amountNumber <= 0) {
       setError('Informe um valor válido.');
       return;
     }
-    addExpense({ description: form.description, category: form.category, amount: amountNumber, date: form.date, paid: false });
+    addExpense({ description: form.description, category: form.category, amount: amountNumber, expenseDate: form.date, paid: false });
     setForm(EMPTY_FORM);
     setError('');
     setIsFormOpen(false);
@@ -142,7 +138,7 @@ export default function Expenses() {
                   <td className="py-3 pr-4 text-ink-800">{expense.description}</td>
                   <td className="py-3 pr-4 text-ink-600">{CATEGORY_LABELS[expense.category]}</td>
                   <td className="py-3 pr-4 text-ink-600">
-                    {new Date(`${expense.date}T00:00:00`).toLocaleDateString('pt-BR')}
+                    {new Date(`${expense.expenseDate}T00:00:00`).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="py-3 pr-4 font-medium text-ink-900">{formatCurrency(expense.amount)}</td>
                   <td className="py-3 pr-4">

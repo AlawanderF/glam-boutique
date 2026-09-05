@@ -22,6 +22,22 @@ paymentMethodsRouter.post('/', requireAdminAuth, async (req, res) => {
     return res.status(400).json({ error: 'O campo "label" é obrigatório.' });
   }
 
+  // Validar discountPercent
+  if (discountPercent !== undefined) {
+    const discount = Number(discountPercent);
+    if (isNaN(discount) || discount < 0 || discount > 100) {
+      return res.status(400).json({ error: 'discountPercent deve ser 0-100' });
+    }
+  }
+
+  // Validar maxInstallments
+  if (maxInstallments !== undefined) {
+    const installments = Number(maxInstallments);
+    if (isNaN(installments) || installments < 1 || installments > 24) {
+      return res.status(400).json({ error: 'maxInstallments deve ser 1-24' });
+    }
+  }
+
   const id = `custom-${Date.now()}`;
   try {
     await pool.query(

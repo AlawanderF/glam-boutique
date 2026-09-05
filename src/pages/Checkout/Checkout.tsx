@@ -15,6 +15,12 @@ import { ROUTES, FREE_SHIPPING_THRESHOLD } from '@/constants';
 
 const STEP_ORDER: CheckoutStep[] = ['identificacao', 'endereco', 'entrega', 'pagamento', 'revisao'];
 
+function generateOrderNumber(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `ORD-${timestamp}-${random}`.toUpperCase();
+}
+
 export default function Checkout() {
   const { items, subtotal, discountAmount, clearCart } = useCartStore();
   const [step, setStep] = useState<CheckoutStep>('identificacao');
@@ -81,7 +87,7 @@ export default function Checkout() {
     setIsSubmitting(true);
     // Em produção: enviar para services/orderService.ts (integração com gateway de pagamento)
     await new Promise((resolve) => setTimeout(resolve, 1400));
-    const generatedOrderNumber = `GB${Math.floor(100000 + Math.random() * 900000)}`;
+    const generatedOrderNumber = generateOrderNumber();
     setOrderNumber(generatedOrderNumber);
     setIsSubmitting(false);
     setOrderCompleted(true);

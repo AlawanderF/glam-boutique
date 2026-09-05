@@ -19,8 +19,26 @@ expensesRouter.get('/', requireAdminAuth, async (_req, res) => {
 expensesRouter.post('/', requireAdminAuth, async (req, res) => {
   const { description, category, amount, expenseDate, paid = false } = req.body;
 
-  if (!description || !category || !amount || !expenseDate) {
-    return res.status(400).json({ error: 'Campos obrigatórios: description, category, amount, expenseDate.' });
+  // Validar campos obrigatórios
+  if (!description || !category || amount === undefined) {
+    return res.status(400).json({ error: 'Campos obrigatórios: description, category, amount' });
+  }
+
+  // Validar amount
+  const amountNumber = Number(amount);
+  if (isNaN(amountNumber) || amountNumber <= 0) {
+    return res.status(400).json({ error: 'Amount deve ser número positivo' });
+  }
+
+  // Validar category
+  const validCategories = ['fornecedores', 'aluguel', 'marketing', 'salarios', 'logistica', 'impostos', 'outros'];
+  if (!validCategories.includes(category)) {
+    return res.status(400).json({ error: 'Categoria inválida' });
+  }
+
+  // Validar expenseDate se fornecido
+  if (expenseDate && isNaN(Date.parse(expenseDate))) {
+    return res.status(400).json({ error: 'expenseDate inválido' });
   }
 
   try {

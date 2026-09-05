@@ -4,7 +4,8 @@ import type { PageView } from '@/types/admin';
 
 interface AnalyticsState {
   pageViews: PageView[];
-  recordPageView: (path: string) => void;
+  sessionId: string;
+  recordPageView: (data: { sessionId: string; path: string; device?: string; referrer?: string }) => Promise<void>;
   getTotalViews: () => number;
   getUniqueSessions: () => number;
   getViewsByPath: () => { path: string; count: number }[];
@@ -24,17 +25,30 @@ export const useAnalyticsStore = create<AnalyticsState>()(
   persist(
     (set, get) => ({
       pageViews: [],
+      sessionId: getSessionId(),
 
-      recordPageView: (path) => {
+      recordPageView: async (data) => {
+        // Chamar API do backend
+        try {
+          const { id, ...apiData } = data;
+          await fetch('/api/analytics/pageview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(apiData),
+          });
+        } catch (error) {
+          console.error('Failed to record pageview:', error);
+        }
+
+        // Manter localStorage também
         const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-        const sessionId = getSessionId();
         const view: PageView = {
-          id: `${sessionId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          path,
+          id: `${data.sessionId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          path: data.path,
           timestamp: new Date().toISOString(),
-          device: isMobile ? 'mobile' : 'desktop',
-          referrer: typeof document !== 'undefined' ? (document.referrer || 'direto') : 'direto',
-          sessionId,
+          device: data.device || (isMobile ? 'mobile' : 'desktop'),
+          referrer: data.referrer || 'direto',
+          sessionId: data.sessionId,
         };
         set((state) => ({
           pageViews: [...state.pageViews, view].slice(-MAX_STORED_VIEWS),
