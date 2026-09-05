@@ -5,9 +5,12 @@ import {
 } from 'lucide-react';
 import { KpiCard } from '@/components/admin/KpiCard';
 import { useAnalyticsStore } from '@/store/analyticsStore';
-import { useAdminAuthStore } from '@/store/adminAuthStore';
 import { trafficSources, dailySales } from '@/constants/salesData';
 import { formatCurrency } from '@/utils/format';
+
+function isBackendConfigured(): boolean {
+  return Boolean(import.meta.env.VITE_API_URL as string | undefined);
+}
 
 interface BackendAnalytics {
   totalViews: number;
@@ -34,15 +37,13 @@ export default function Analytics() {
   // Buscar summary do backend
   useEffect(() => {
     async function fetchAnalytics() {
-      const token = useAdminAuthStore.getState().token;
-      if (!token) {
+      if (!isBackendConfigured()) {
         setAnalyticsData(d => ({ ...d, loading: false }));
         return;
       }
 
       try {
-        const headers = { 'Authorization': `Bearer ${token}` };
-        const res = await fetch('/api/analytics/summary?days=30', { headers });
+        const res = await fetch('/api/analytics/summary?days=30', { credentials: 'include' });
         const data = await res.json();
 
         setAnalyticsData({

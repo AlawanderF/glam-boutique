@@ -25,6 +25,15 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Global rate limiting — aplica a todas as rotas API.
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 100, // 100 requests por IP por minuto
+  message: { error: 'Muitas requisições. Tente novamente em um minuto.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(cors({
   origin: (origin, callback) => {
     const allowed = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
@@ -55,6 +64,8 @@ app.get('/api/health/db', async (_req, res) => {
 
 // Aplicar rate limiting apenas na rota de login (antes do router)
 app.use('/api/admin/login', loginLimiter);
+// Aplicar rate limiting global a todas as rotas API.
+app.use('/api', globalLimiter);
 app.use('/api/admin', adminAuthRouter);
 app.use('/api/sales', salesRouter);
 app.use('/api/expenses', expensesRouter);

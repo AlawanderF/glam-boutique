@@ -1,5 +1,10 @@
 export { useAddToCart } from './useAddToCart';
+export { useApiOrMock } from './useApiOrMock';
+export type { UseApiOrMockOptions, UseApiOrMockReturn } from './useApiOrMock';
+export { useAsync, useRefreshInterval } from './useAsync';
 export { useDebouncedLoading } from './useDebouncedLoading';
 export { useFavoriteToggle } from './useFavoriteToggle';
 export { useFilteredProducts } from './useFilteredProducts';
 export { usePagination } from './usePagination';
+export { useLocalStorage } from './useLocalStorage';
+export { useFocusTrap } from './useFocusTrap';

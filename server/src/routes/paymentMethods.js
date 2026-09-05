@@ -7,7 +7,9 @@ export const paymentMethodsRouter = Router();
 // GET /api/payment-methods — lista todos os métodos configurados (rota pública: o checkout da loja precisa ler)
 paymentMethodsRouter.get('/', async (_req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM payment_methods ORDER BY created_at ASC');
+    const [rows] = await pool.query(
+      'SELECT id, label, enabled, discount_percent, max_installments, is_custom, created_at FROM payment_methods ORDER BY created_at ASC'
+    );
     res.json(rows);
   } catch (error) {
     console.error('[paymentMethods.GET]', error);

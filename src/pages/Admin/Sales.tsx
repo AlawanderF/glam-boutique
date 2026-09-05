@@ -62,7 +62,7 @@ interface MockOrder {
 type DisplayOrder = OrderApi | MockOrder;
 
 function getOrderId(order: DisplayOrder): string {
-  return order.id;
+  return 'id' in order ? order.id : (order as MockOrder).number;
 }
 
 function getOrderDate(order: DisplayOrder): string {
@@ -116,22 +116,20 @@ export default function Sales() {
     loading: true,
   });
 
-  const token = useAdminAuthStore((s) => s.token);
   const isAuthenticated = useAdminAuthStore((s) => s.isAdminAuthenticated);
 
   useEffect(() => {
     async function fetchSales() {
-      if (!isAuthenticated || !token || !API_URL) {
+      if (!isAuthenticated || !API_URL) {
         setSalesData((s) => ({ ...s, loading: false }));
         return;
       }
 
-      const headers = { Authorization: `Bearer ${token}` };
       try {
         const [dailyRes, ordersRes, productsRes] = await Promise.all([
-          fetch(`${API_URL}/api/sales/daily?days=${rangeDays}`, { headers }),
-          fetch(`${API_URL}/api/sales/orders?limit=50`, { headers }),
-          fetch(`${API_URL}/api/sales/top-products`, { headers }),
+          fetch(`${API_URL}/api/sales/daily?days=${rangeDays}`, { credentials: 'include' }),
+          fetch(`${API_URL}/api/sales/orders?limit=50`, { credentials: 'include' }),
+          fetch(`${API_URL}/api/sales/top-products`, { credentials: 'include' }),
         ]);
 
         if (!dailyRes.ok || !ordersRes.ok || !productsRes.ok) {
@@ -151,7 +149,7 @@ export default function Sales() {
     }
 
     fetchSales();
-  }, [rangeDays, token, isAuthenticated]);
+  }, [rangeDays, isAuthenticated]);
 
   // Fallback to mock data if API returns empty
   const displayDaily = salesData.daily.length > 0 ? salesData.daily : mockDailySales.slice(-rangeDays);

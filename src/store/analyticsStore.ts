@@ -33,7 +33,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
           await fetch('/api/analytics/pageview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
+            body: JSON.stringify({ ...data, id: `${data.sessionId}-${Date.now()}` }),
           });
         } catch (error) {
           console.error('Failed to record pageview:', error);

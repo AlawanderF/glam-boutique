@@ -14,8 +14,8 @@ export default function PaymentMethods() {
   const [error, setError] = useState('');
   const [editingDiscount, setEditingDiscount] = useState<{ id: string; value: string } | null>(null);
 
-  const handleDiscountUpdate = async (id: string, discount: number) => {
-    updateMethod(id, { discountPercent: discount || undefined });
+  const handleDiscountUpdate = async (id: string, discount: string) => {
+    updateMethod(id, { discountPercent: discount ? Number(discount) : undefined });
   };
 
   const handleAdd = (e: React.FormEvent) => {
@@ -113,7 +113,7 @@ export default function PaymentMethods() {
               </label>
               <button
                 type="button"
-                onClick={() => setEditingDiscount({ id: method.id, value: String(method.discountPercent ?? '') })}
+                onClick={() => setEditingDiscount({ id: method.id, value: method.discountPercent != null ? String(method.discountPercent) : '' })}
                 className="link-underline text-2xs font-semibold uppercase tracking-wider text-ink-500 hover:text-ink-900"
               >
                 Editar desconto
@@ -150,7 +150,7 @@ export default function PaymentMethods() {
               </button>
               <button
                 onClick={() => {
-                  handleDiscountUpdate(editingDiscount.id, Number(editingDiscount.value));
+                  handleDiscountUpdate(editingDiscount.id, editingDiscount.value);
                   setEditingDiscount(null);
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded"

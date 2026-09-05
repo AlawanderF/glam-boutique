@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import argon2 from 'argon2';
 
 const password = process.argv[2];
 
@@ -7,6 +7,6 @@ if (!password) {
   process.exit(1);
 }
 
-const hash = bcrypt.hashSync(password, 12);
+const hash = await argon2.hash(password, { type: argon2.argon2id });
 console.log('\nAdicione esta linha ao seu server/.env:\n');
 console.log(`ADMIN_PASSWORD_HASH=${hash}\n`);

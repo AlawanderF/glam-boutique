@@ -1,62 +1,9 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 
-function decodeToken(token: string): { exp: number } | null {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-}
-
-function isTokenValid(token: string): boolean {
-  const decoded = decodeToken(token);
-  if (!decoded) return false;
-  return decoded.exp * 1000 > Date.now();
-}
-
 function isBackendConfigured(): boolean {
   return Boolean(API_URL && API_URL.trim().length > 0);
-}
-
-async function getAuthHeaders(): Promise<HeadersInit> {
-  const token = useAdminAuthStore.getState().token;
-  if (!token) return {};
-  return { 'Authorization': `Bearer ${token}` };
-}
-
-async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  if (!API_URL) {
-    throw new Error('VITE_API_URL não configurada.');
-  }
-
-  const authHeaders = await getAuthHeaders();
-
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? `Erro na requisição (${response.status})`);
-  }
-
-  return response.json() as Promise<T>;
 }
 
 export type AdminAuthMode = 'backend' | 'demo';
@@ -64,63 +11,113 @@ export type AdminAuthMode = 'backend' | 'demo';
 interface AdminAuthState {
   isAdminAuthenticated: boolean;
   adminName: string | null;
-  token: string | null;
   mode: AdminAuthMode;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  logout: () => void;
-  isValid: () => boolean;
+  logout: () => Promise<void>;
+  verifySession: () => Promise<boolean>;
+  checkAuth: () => Promise<void>;
 }
 
-export const useAdminAuthStore = create<AdminAuthState>()(
-  persist(
-    (set, get) => ({
-      isAdminAuthenticated: false,
-      adminName: null,
-      token: null,
-      mode: isBackendConfigured() ? 'backend' : 'demo',
+export const useAdminAuthStore = create<AdminAuthState>()((set, get) => ({
+  isAdminAuthenticated: false,
+  adminName: null,
+  mode: isBackendConfigured() ? 'backend' : 'demo',
 
-      login: async (email, password) => {
-        if (!isBackendConfigured()) {
-          return { success: false, message: 'Backend não configurado.' };
-        }
+  login: async (email, password) => {
+    if (!isBackendConfigured()) {
+      return { success: false, message: 'Backend não configurado.' };
+    }
 
-        try {
-          const result = await apiRequest<{ token: string }>('/admin/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password }),
-          });
-          set({
-            isAdminAuthenticated: true,
-            adminName: 'Administrador(a) Glam Boutique',
-            token: result.token,
-            mode: 'backend',
-          });
-          return { success: true };
-        } catch (error) {
-          return {
-            success: false,
-            message: error instanceof Error ? error.message : 'Erro ao fazer login.',
-          };
-        }
-      },
+    try {
+      const response = await fetch(`${API_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Important: include cookies in the request
+        body: JSON.stringify({ email, password }),
+      });
 
-      logout: () => set({ isAdminAuthenticated: false, adminName: null, token: null }),
+      const data = await response.json();
 
-      isValid: () => {
-        const { token, isAdminAuthenticated } = get();
-        if (!isAdminAuthenticated || !token) return false;
-        return isTokenValid(token);
-      },
-    }),
-    { name: 'glam-boutique-admin-auth' }
-  )
-);
+      if (!response.ok) {
+        return { success: false, message: data.error ?? 'Erro ao fazer login.' };
+      }
 
-// Verificar token expirado periodicamente
-const token = useAdminAuthStore.getState().token;
-if (token && !isTokenValid(token)) {
-  useAdminAuthStore.getState().logout();
-  if (typeof window !== 'undefined') {
-    window.location.href = '/admin/login?expired=true';
+      set({
+        isAdminAuthenticated: true,
+        adminName: 'Administrador(a) Glam Boutique',
+        mode: 'backend',
+      });
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erro ao fazer login.',
+      };
+    }
+  },
+
+  logout: async () => {
+    if (isBackendConfigured() && API_URL) {
+      try {
+        await fetch(`${API_URL}/api/admin/logout`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch {
+        // Ignore logout errors - we still want to clear local state
+      }
+    }
+    set({ isAdminAuthenticated: false, adminName: null });
+  },
+
+  verifySession: async (): Promise<boolean> => {
+    if (!isBackendConfigured() || !API_URL) {
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/verify`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        set({ isAdminAuthenticated: false, adminName: null });
+        return false;
+      }
+
+      const data = await response.json();
+      if (data.valid) {
+        set({
+          isAdminAuthenticated: true,
+          adminName: 'Administrador(a) Glam Boutique',
+        });
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  },
+
+  checkAuth: async () => {
+    if (!isBackendConfigured()) {
+      return;
+    }
+
+    const isValid = await get().verifySession();
+    if (!isValid && get().isAdminAuthenticated) {
+      set({ isAdminAuthenticated: false, adminName: null });
+      if (typeof window !== 'undefined') {
+        window.location.href = '/admin/login?expired=true';
+      }
+    }
+  },
+}));
+
+// Check for expired session on load (for pages that don't use the layout)
+if (typeof window !== 'undefined' && isBackendConfigured()) {
+  // Run on admin routes only
+  if (window.location.pathname.startsWith('/admin')) {
+    useAdminAuthStore.getState().checkAuth();
   }
 }

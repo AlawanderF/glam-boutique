@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, ChevronDown, Package } from 'lucide-react';
-import { mockOrders, type OrderStatus } from '@/constants/orders';
+import { mockOrders, type Order, type OrderStatus } from '@/constants/orders';
 import { formatCurrency, classNames } from '@/utils/format';
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> = {
@@ -10,8 +10,21 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> =
   cancelado: { label: 'Cancelado', className: 'bg-danger/10 text-danger' },
 };
 
+interface OrderItemType {
+  name: string;
+  image: string;
+  quantity: number;
+  price: number;
+}
+
+interface TrackingStepType {
+  label: string;
+  done: boolean;
+  date?: string;
+}
+
 export default function Orders() {
-  const orders: typeof mockOrders = mockOrders || [];
+  const orders: Order[] = mockOrders || [];
   const initialExpandedId = orders.length > 0 ? orders[0]?.id ?? null : null;
   const [expandedId, setExpandedId] = useState<string | null>(initialExpandedId);
 
@@ -26,7 +39,7 @@ export default function Orders() {
 
   return (
     <div className="flex flex-col gap-5">
-      {orders.map((order) => {
+      {orders.map((order: Order) => {
         const isExpanded = expandedId === order.id;
         const statusConfig = STATUS_CONFIG[order.status];
 
@@ -53,7 +66,7 @@ export default function Orders() {
             {isExpanded && (
               <div className="border-t border-ink-200 p-5">
                 <ul className="flex flex-col gap-3">
-                  {order.items.map((item, i) => (
+                  {order.items.map((item: OrderItemType, i: number) => (
                     <li key={i} className="flex items-center gap-3">
                       <img src={item.image} alt={item.name} className="h-14 w-12 rounded-sm object-cover" />
                       <div className="flex-1">
@@ -68,7 +81,7 @@ export default function Orders() {
                 <div className="mt-6">
                   <p className="text-xs font-semibold uppercase tracking-wider text-ink-700">Status do rastreamento</p>
                   <ol className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-2">
-                    {order.trackingSteps.map((trackingStep, i) => (
+                    {order.trackingSteps.map((trackingStep: TrackingStepType, i: number) => (
                       <li key={i} className="flex flex-1 items-center gap-2 sm:flex-col sm:items-center sm:text-center">
                         <span
                           className={classNames(

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus, Trash2, Check, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Trash2, Check, X, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useExpensesStore } from '@/store/expensesStore';
+import { usePagination } from '@/hooks';
 import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { formatCurrency, classNames } from '@/utils/format';
@@ -55,6 +56,22 @@ export default function Expenses() {
   const filteredExpenses = filterCategory
     ? expenses.filter((e) => e.category === filterCategory)
     : expenses;
+
+  const {
+    currentPage,
+    totalPages,
+    pageSize,
+    totalItems,
+    startIndex,
+    endIndex,
+    currentItems,
+    hasPrevious,
+    hasNext,
+    goToPage,
+    goToNextPage,
+    goToPreviousPage,
+    pageNumbers,
+  } = usePagination({ items: filteredExpenses, pageSize: 10 });
 
   const currentMonth = expenses
     .filter((e) => new Date(e.expenseDate).getMonth() === new Date().getMonth())
@@ -178,7 +195,10 @@ export default function Expenses() {
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `R$ ${v}`} tick={{ fontSize: 12 }} />
               <Tooltip
-                formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, 'Total']}
+                formatter={(value) => {
+                  const numVal = typeof value === 'number' ? value : parseFloat(String(value));
+                  return [`R$ ${numVal.toFixed(2)}`, 'Total'] as [string, string];
+                }}
                 contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
               />
               <Bar dataKey="total" radius={[4, 4, 0, 0]}>
@@ -220,7 +240,7 @@ export default function Expenses() {
               </tr>
             </thead>
             <tbody>
-              {filteredExpenses.map((expense) => (
+              {currentItems.map((expense) => (
                 <tr key={expense.id} className="border-b border-ink-100">
                   <td className="py-3 pr-4 text-ink-800">{expense.description}</td>
                   <td className="py-3 pr-4 text-ink-600">{CATEGORY_LABELS[expense.category]}</td>
@@ -253,6 +273,56 @@ export default function Expenses() {
               ))}
             </tbody>
           </table>
+
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-xs text-ink-500">
+                Mostrando {startIndex + 1}-{endIndex} de {totalItems} saídas
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={!hasPrevious}
+                  className={classNames(
+                    'flex h-8 w-8 items-center justify-center rounded border transition-colors',
+                    hasPrevious
+                      ? 'border-ink-200 text-ink-600 hover:bg-ink-50'
+                      : 'border-ink-100 text-ink-300 cursor-not-allowed'
+                  )}
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {pageNumbers.map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={classNames(
+                      'flex h-8 min-w-[2rem] items-center justify-center rounded border px-2 text-sm font-medium transition-colors',
+                      page === currentPage
+                        ? 'border-gold-500 bg-gold-500 text-ink-950'
+                        : 'border-ink-200 text-ink-600 hover:bg-ink-50'
+                    )}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={goToNextPage}
+                  disabled={!hasNext}
+                  className={classNames(
+                    'flex h-8 w-8 items-center justify-center rounded border transition-colors',
+                    hasNext
+                      ? 'border-ink-200 text-ink-600 hover:bg-ink-50'
+                      : 'border-ink-100 text-ink-300 cursor-not-allowed'
+                  )}
+                  aria-label="Próxima página"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

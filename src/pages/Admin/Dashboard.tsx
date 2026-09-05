@@ -43,7 +43,7 @@ interface AdminData {
 }
 
 function useAdminData() {
-  const { token, mode } = useAdminAuthStore();
+  const { mode } = useAdminAuthStore();
   const [data, setData] = useState<AdminData>({
     dailySales: [],
     totalRevenue: 0,
@@ -60,12 +60,12 @@ function useAdminData() {
   useEffect(() => {
     async function fetchData() {
       // Fallback to mock data if no backend
-      if (mode !== 'backend' || !token) {
+      if (mode !== 'backend') {
         const last30Days = mockDailySales.slice(-30);
         const totalRevenue = last30Days.reduce((sum, d) => sum + d.revenue, 0);
         const totalOrders = last30Days.reduce((sum, d) => sum + d.orders, 0);
         const lastSaleDate = last30Days.length > 0 ? last30Days[last30Days.length - 1].date : null;
-        const lowStock = mockTopProducts.filter(p => (p.unitsSold < 15 || (p.stock !== undefined && p.stock < 5)));
+        const lowStock = mockTopProducts.filter((p: typeof mockTopProducts[0]) => (p.unitsSold < 15 || ('stock' in p && p.stock !== undefined && p.stock < 5)));
 
         setData({
           dailySales: last30Days,
@@ -90,14 +90,13 @@ function useAdminData() {
       }
 
       try {
-        const headers = { 'Authorization': `Bearer ${token}` };
         const API_URL = import.meta.env.VITE_API_URL as string;
 
         const [dailyRes, ordersRes, productsRes, stockRes] = await Promise.all([
-          fetch(`${API_URL}/api/sales/daily?days=30`, { headers }).catch(() => null),
-          fetch(`${API_URL}/api/sales/orders?limit=10`, { headers }).catch(() => null),
-          fetch(`${API_URL}/api/sales/top-products`, { headers }).catch(() => null),
-          fetch(`${API_URL}/api/products/low-stock`, { headers }).catch(() => null),
+          fetch(`${API_URL}/api/sales/daily?days=30`, { credentials: 'include' }).catch(() => null),
+          fetch(`${API_URL}/api/sales/orders?limit=10`, { credentials: 'include' }).catch(() => null),
+          fetch(`${API_URL}/api/sales/top-products`, { credentials: 'include' }).catch(() => null),
+          fetch(`${API_URL}/api/products/low-stock`, { credentials: 'include' }).catch(() => null),
         ]);
 
         const daily = dailyRes?.ok ? await dailyRes.json() : mockDailySales.slice(-30);
@@ -147,7 +146,7 @@ function useAdminData() {
       }
     }
     fetchData();
-  }, [token, mode]);
+  }, [mode]);
 
   return data;
 }

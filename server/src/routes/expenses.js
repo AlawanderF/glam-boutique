@@ -4,11 +4,19 @@ import { requireAdminAuth } from './adminAuth.js';
 
 export const expensesRouter = Router();
 
-// GET /api/expenses — lista todas as saídas
-expensesRouter.get('/', requireAdminAuth, async (_req, res) => {
+// GET /api/expenses — lista saídas com paginação
+expensesRouter.get('/', requireAdminAuth, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM expenses ORDER BY expense_date DESC');
-    res.json(rows);
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    const [rows] = await pool.query(
+      'SELECT id, description, category, amount, expense_date, paid FROM expenses ORDER BY expense_date DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM expenses');
+    res.json({ data: rows, total, page, limit });
   } catch (error) {
     console.error('[expenses.GET]', error);
     res.status(500).json({ error: 'Erro ao consultar saídas.' });

@@ -26,24 +26,18 @@ export function isBackendConfigured(): boolean {
   return Boolean(API_URL && API_URL.trim().length > 0);
 }
 
-interface ApiRequestOptions extends RequestInit {
-  token?: string | null;
-}
-
-export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!API_URL) {
     throw new Error('VITE_API_URL não configurada.');
   }
 
-  const { token, headers, ...rest } = options;
-
   const response = await fetch(`${API_URL}${path}`, {
-    ...rest,
+    ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
+      ...options.headers,
     },
+    credentials: 'include', // Include HTTP-only cookies
   });
 
   if (!response.ok) {
