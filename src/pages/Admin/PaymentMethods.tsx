@@ -12,9 +12,9 @@ export default function PaymentMethods() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
-  const [editingDiscount, setEditingDiscount] = useState<{ id: number; value: string } | null>(null);
+  const [editingDiscount, setEditingDiscount] = useState<{ id: string; value: string } | null>(null);
 
-  const handleDiscountUpdate = async (id: number, discount: number) => {
+  const handleDiscountUpdate = async (id: string, discount: number) => {
     updateMethod(id, { discountPercent: discount || undefined });
   };
 

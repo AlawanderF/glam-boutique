@@ -7,7 +7,7 @@ interface AsyncState<T> {
 }
 
 interface AsyncReturn<T> extends AsyncState<T> {
-  execute: (...args: any[]) => Promise<void>;
+  execute: (...args: any[]) => Promise<T>;
   reset: () => void;
   setData: (data: T) => void;
 }

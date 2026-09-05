@@ -51,6 +51,24 @@ interface TopProductApi {
   unitsSold: number;
 }
 
+interface MockOrder {
+  id: string;
+  number: string;
+  date: string;
+  status: string;
+  total: number;
+}
+
+type DisplayOrder = OrderApi | MockOrder;
+
+function getOrderId(order: DisplayOrder): string {
+  return order.id;
+}
+
+function getOrderDate(order: DisplayOrder): string {
+  return 'date' in order ? order.date : order.createdAt;
+}
+
 function SkeletonCard() {
   return (
     <div className="animate-pulse border border-ink-200 bg-cream-50 p-5">
@@ -137,7 +155,7 @@ export default function Sales() {
 
   // Fallback to mock data if API returns empty
   const displayDaily = salesData.daily.length > 0 ? salesData.daily : mockDailySales.slice(-rangeDays);
-  const displayOrders = salesData.orders.length > 0 ? salesData.orders : mockOrders;
+  const displayOrders: DisplayOrder[] = salesData.orders.length > 0 ? salesData.orders : mockOrders;
   const displayTopProducts =
     salesData.topProducts.length > 0
       ? salesData.topProducts
@@ -243,14 +261,15 @@ export default function Sales() {
           <h2 className="font-display text-lg text-ink-900">Pedidos recentes</h2>
           <ul className="mt-4 flex flex-col gap-3">
             {paginatedOrders.map((order) => {
-              const orderNumber = 'number' in order ? order.number : order.id;
-              const orderDate = 'date' in order ? order.date : order.createdAt;
+              const orderNumber = order.number || order.id;
+              const orderDate = 'date' in order ? (order as MockOrder).date : (order as OrderApi).createdAt;
               const orderStatus = order.status.toLowerCase();
               const statusStyle = STATUS_STYLES[orderStatus] ?? { bg: 'bg-ink-100', text: 'text-ink-600' };
+              const formattedDate = new Date(orderDate);
 
               return (
                 <li
-                  key={order.id}
+                  key={getOrderId(order)}
                   className="flex items-center justify-between border-b border-ink-100 pb-3 text-sm last:border-0"
                 >
                   <div className="flex-1">
@@ -267,13 +286,13 @@ export default function Sales() {
                       </span>
                     </div>
                     <p className="mt-0.5 text-xs text-ink-500">
-                      {new Date(orderDate).toLocaleDateString('pt-BR', {
+                      {formattedDate.toLocaleDateString('pt-BR', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',
                       })}{' '}
                       às{' '}
-                      {new Date(orderDate).toLocaleTimeString('pt-BR', {
+                      {formattedDate.toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}

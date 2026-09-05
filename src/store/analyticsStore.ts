@@ -30,11 +30,10 @@ export const useAnalyticsStore = create<AnalyticsState>()(
       recordPageView: async (data) => {
         // Chamar API do backend
         try {
-          const { id, ...apiData } = data;
           await fetch('/api/analytics/pageview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiData),
+            body: JSON.stringify(data),
           });
         } catch (error) {
           console.error('Failed to record pageview:', error);
@@ -46,7 +45,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
           id: `${data.sessionId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           path: data.path,
           timestamp: new Date().toISOString(),
-          device: data.device || (isMobile ? 'mobile' : 'desktop'),
+          device: (data.device || (isMobile ? 'mobile' : 'desktop')) as 'mobile' | 'desktop',
           referrer: data.referrer || 'direto',
           sessionId: data.sessionId,
         };

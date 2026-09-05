@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
-): [T, (value: T | ((val: T) => T) => void) => void, () => void] {
+): [T, (value: T | ((val: T) => T)) => void, () => void] {
   // Get initial value from localStorage or use default
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {

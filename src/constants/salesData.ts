@@ -34,11 +34,11 @@ export function generateDailySales(days = 30): DailySalesPoint[] {
 export const dailySales = generateDailySales(30);
 
 export const topSellingProducts = [
-  { name: 'Vestido Midi Alfaiataria', revenue: 18840, unitsSold: 42 },
-  { name: 'Tênis Runner Performance', revenue: 16450, unitsSold: 47 },
-  { name: 'Moletom Essential Oversized', revenue: 12480, unitsSold: 68 },
-  { name: 'Jaqueta Couro Ecológico Clássica', revenue: 11475, unitsSold: 25 },
-  { name: 'Camisa Social Slim Listrada', revenue: 9230, unitsSold: 42 },
+  { name: 'Vestido Midi Alfaiataria', revenue: 18840, unitsSold: 42, stock: 8 },
+  { name: 'Tênis Runner Performance', revenue: 16450, unitsSold: 47, stock: 15 },
+  { name: 'Moletom Essential Oversized', revenue: 12480, unitsSold: 68, stock: 3 },
+  { name: 'Jaqueta Couro Ecológico Clássica', revenue: 11475, unitsSold: 25, stock: 12 },
+  { name: 'Camisa Social Slim Listrada', revenue: 9230, unitsSold: 42, stock: 6 },
 ];
 
 export const trafficSources = [

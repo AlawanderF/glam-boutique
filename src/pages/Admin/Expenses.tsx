@@ -178,7 +178,7 @@ export default function Expenses() {
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `R$ ${v}`} tick={{ fontSize: 12 }} />
               <Tooltip
-                formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Total']}
+                formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, 'Total']}
                 contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
               />
               <Bar dataKey="total" radius={[4, 4, 0, 0]}>

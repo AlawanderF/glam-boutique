@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, ChevronDown, Package } from 'lucide-react';
-import { mockOrders as ordersData, type OrderStatus } from '@/constants/orders';
+import { mockOrders, type OrderStatus } from '@/constants/orders';
 import { formatCurrency, classNames } from '@/utils/format';
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> = {
@@ -11,7 +11,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> =
 };
 
 export default function Orders() {
-  const orders: typeof mockOrders = ordersData || [];
+  const orders: typeof mockOrders = mockOrders || [];
   const initialExpandedId = orders.length > 0 ? orders[0]?.id ?? null : null;
   const [expandedId, setExpandedId] = useState<string | null>(initialExpandedId);
 

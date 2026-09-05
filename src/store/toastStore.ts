@@ -1,37 +1,26 @@
 import { create } from 'zustand';
 
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
-
-export interface Toast {
+interface Toast {
   id: string;
-  type: ToastType;
-  title: string;
-  message?: string;
-  duration?: number;
+  message: string;
+  description?: string;
+  type: 'success' | 'error' | 'info';
 }
 
 interface ToastState {
   toasts: Toast[];
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
-  clearToasts: () => void;
+  show: (toast: Omit<Toast, 'id'>) => void;
+  dismiss: (id: string) => void;
 }
 
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
-  addToast: (toast) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const newToast = { ...toast, id };
-    set((state) => ({ toasts: [...state.toasts, newToast] }));
-
-    // Auto-remove after duration
-    const duration = toast.duration ?? 5000;
-    if (duration > 0) {
-      setTimeout(() => {
-        set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
-      }, duration);
-    }
+  show: (toast) => {
+    const id = Math.random().toString(36).slice(2);
+    set((state) => ({ toasts: [...state.toasts, { ...toast, id }] }));
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
+    }, 3800);
   },
-  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
-  clearToasts: () => set({ toasts: [] }),
+  dismiss: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }));
