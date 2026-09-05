@@ -1,0 +1,25 @@
+name: Stale
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 30
+          days-before-close: 7
+          stale-pr-message: 'Esta PR está sem atividade há 30 dias. Será fechada em 7 dias se não houver atualização.'
+          stale-issue-message: 'Esta issue está sem atividade há 30 dias. Será fechada em 7 dias se não houver atualização.'
+          close-pr-message: 'Fechando por inatividade.'
+          close-issue-message: 'Fechando por inatividade.'
+          exempt-pr-labels: 'security,priority'
+          exempt-issue-labels: 'security,priority'
