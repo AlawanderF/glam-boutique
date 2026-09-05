@@ -37,8 +37,6 @@
     "typecheck": "tsc --noEmit",
     "sitemap": "node scripts/generate-sitemap.mjs",
     "copy-404": "node scripts/copy-404.mjs",
-    "prepare": "husky install",
-    "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui"
   },
